@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MiKS · Music</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@200;300;400;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --coffee:#161009;--coffee2:#1c140c;--bone:#f0e7d8;--sand:#cdb896;--mist:#8f8069;
+    --gold:#f3c969;--ochre:#e09f3e;--clay:#c9552e;
+    --hair:rgba(224,159,62,.22);--hair-dim:rgba(224,159,62,.12);
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{min-height:100%}
+  body{
+    background:
+      radial-gradient(ellipse 60% 50% at 20% 20%, rgba(201,85,46,.10), transparent 60%),
+      radial-gradient(ellipse 55% 55% at 82% 78%, rgba(224,159,62,.08), transparent 62%),
+      var(--coffee);
+    color:var(--bone);font-family:'Sora',sans-serif;overflow-x:hidden;
+  }
+  header{display:flex;justify-content:center;align-items:center;position:relative;padding:24px 42px 16px;z-index:5}
+  .brand{position:absolute;left:42px;top:50%;transform:translateY(-50%);display:flex;align-items:center;gap:11px}
+  .brand img{height:34px;opacity:.95}
+  .brand b{font-weight:600;letter-spacing:.32em;font-size:43px;color:var(--gold)}
+  nav{display:flex;gap:30px}
+  nav a{color:var(--mist);text-decoration:none;font-family:'IBM Plex Mono';font-size:10px;letter-spacing:.26em;transition:color .3s}
+  nav a:hover,nav a.on{color:var(--gold)}
+
+  .wrap{
+    display:grid;grid-template-columns:1.05fr 1fr;gap:40px;align-items:center;
+    max-width:1440px;margin:0 auto;padding:2vh 48px 8vh;min-height:calc(100vh - 90px);
+  }
+
+  /* the living blob */
+  .stage{position:relative;aspect-ratio:1;width:100%;max-width:310px;justify-self:center}
+  #blob{position:absolute;inset:-55%;width:210%;height:210%;cursor:pointer}
+  .now{
+    position:absolute;left:50%;bottom:2%;transform:translateX(-50%);text-align:center;width:90%;
+    pointer-events:none;opacity:0;transition:opacity .5s;
+  }
+  .now.show{opacity:1}
+  .now .np{font-family:'IBM Plex Mono';font-size:9px;letter-spacing:.4em;color:var(--mist);text-transform:uppercase}
+  .now h3{font-weight:300;font-size:26px;letter-spacing:.01em;margin-top:6px;text-shadow:0 2px 16px rgba(0,0,0,.6)}
+
+  /* releases list */
+  .rel-head .kick{font-family:'IBM Plex Mono';font-size:10px;letter-spacing:.5em;color:var(--gold);text-transform:uppercase}
+  .rel-head h1{font-weight:200;font-size:clamp(40px,5vw,68px);line-height:.98;letter-spacing:-.02em;margin:12px 0 26px}
+  .rel-head h1 b{font-weight:600}
+  .rel{display:flex;flex-direction:column;gap:2px}
+  .track{
+    display:grid;grid-template-columns:1fr auto;align-items:center;gap:16px;
+    padding:15px 12px;border-top:1px solid var(--hair-dim);cursor:pointer;
+    transition:background .3s,padding-left .3s;
+  }
+  .track:last-child{border-bottom:1px solid var(--hair-dim)}
+  .track:hover{background:rgba(224,159,62,.05);padding-left:18px}
+  .track.playing{background:rgba(224,159,62,.09)}
+  .swatch{width:20px;height:20px;border-radius:50%;justify-self:center;box-shadow:0 0 14px -3px rgba(0,0,0,.6)}
+  .track .ti b{font-weight:400;font-size:16px}
+  .track .ti em{display:block;font-style:normal;color:var(--mist);font-family:'IBM Plex Mono';
+    font-size:9px;letter-spacing:.16em;text-transform:uppercase;margin-top:3px}
+  .track .pc{
+    width:34px;height:34px;border-radius:50%;border:1px solid var(--hair);background:none;color:var(--bone);
+    display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .3s;font-size:11px;flex:none;
+  }
+  .track:hover .pc,.track.playing .pc{border-color:var(--gold);color:var(--gold)}
+  .track.playing .pc{background:var(--gold);color:#2a1206}
+
+  footer{text-align:center;padding:14px 0 34px}
+  footer .m{font-family:'IBM Plex Mono';font-size:9px;letter-spacing:.28em;color:var(--mist);text-transform:uppercase}
+
+  @media (max-width:900px){
+    .wrap{grid-template-columns:1fr;gap:12px;padding:2vh 22px 8vh;min-height:0}
+    .stage{max-width:360px;order:-1}
+    nav{display:none}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand"><img src="media/logo.png" alt="MiKS logo"><b>MiKS</b></div>
+  <nav>
+    <a href="index.html">HOME</a>
+    <a href="music.html" class="on">MUSIC</a>
+    <a href="tour.html">TOUR</a>
+    <a href="#" onclick="return false">PROJECTS</a>
+    <a href="#" onclick="return false">SHOP</a>
+    <a href="#" onclick="return false">CONTACT</a>
+  </nav>
+</header>
+
+<div class="wrap">
+  <div class="stage">
+    <canvas id="blob"></canvas>
+    <div class="now" id="now"><div class="np">Now playing</div><h3 id="nowTitle"></h3></div>
+  </div>
+
+  <div>
+    <div class="rel-head">
+      <span class="kick">Fresh from the studio</span>
+      <h1>New <b>releases.</b></h1>
+    </div>
+    <div class="rel" id="rel"></div>
+  </div>
+</div>
+
+<footer><span class="m">© MiKS · all blends live · all rights reserved</span></footer>
+
+<audio id="player" crossorigin="anonymous"></audio>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+<script>
+/* ═══ new releases — file + the tones each one paints the blob ═══ */
+const RELEASES=[
+  {title:'HerPulse',   file:'tracks/HerPulse1.mp3', tag:'Single · Afro House',
+    tone:{main:0xd4487a, emis:0x5a1030, l1:0xffd0e0, l2:0xc23a6a}},
+  {title:'Moonlit',    file:'tracks/Moonlit.mp3',   tag:'Single · Deep',
+    tone:{main:0x6f8fd6, emis:0x101a3a, l1:0xdfe8ff, l2:0x3a5ec2}},
+  {title:'Sands',      file:'tracks/Sands.mp3',     tag:'Single · Desert House',
+    tone:{main:0xc9a233, emis:0x4a3a08, l1:0xfff3cf, l2:0xe09f3e}},
+  {title:'Ocean',      file:'tracks/Ocean.mp3',     tag:'Single · Organic',
+    tone:{main:0x3fb59a, emis:0x073028, l1:0xd6fff2, l2:0x1f9a80}},
+  {title:'Ngiyavuma',  file:'tracks/Ngiyavuma.mp3', tag:'Single · Amapiano',
+    tone:{main:0xc9552e, emis:0x3a1206, l1:0xffd9c0, l2:0xe0673a}},
+  {title:'NightTemple',file:'tracks/NightTemple2.mp3',tag:'Single · Ritual',
+    tone:{main:0x8a5cd6, emis:0x220a3a, l1:0xe8d6ff, l2:0x6a3ac2}},
+];
+
+/* ═══ three.js noise-displaced blob (reused from the mixer) ═══ */
+const simplex=(function(){
+  const grad=[[1,1,0],[-1,1,0],[1,-1,0],[-1,-1,0],[1,0,1],[-1,0,1],[1,0,-1],[-1,0,-1],[0,1,1],[0,-1,1],[0,1,-1],[0,-1,-1]];
+  const p=new Uint8Array(256);let seed=1337;
+  for(let i=0;i<256;i++)p[i]=i;
+  for(let i=255;i>0;i--){seed=(seed*16807)%2147483647;const j=seed%(i+1);const t=p[i];p[i]=p[j];p[j]=t;}
+  const perm=new Uint8Array(512);for(let i=0;i<512;i++)perm[i]=p[i&255];
+  const F3=1/3,G3=1/6;
+  return function(x,y,z){
+    const s=(x+y+z)*F3,i=Math.floor(x+s),j=Math.floor(y+s),k=Math.floor(z+s),t=(i+j+k)*G3;
+    const x0=x-(i-t),y0=y-(j-t),z0=z-(k-t);let i1,j1,k1,i2,j2,k2;
+    if(x0>=y0){if(y0>=z0){i1=1;j1=0;k1=0;i2=1;j2=1;k2=0;}else if(x0>=z0){i1=1;j1=0;k1=0;i2=1;j2=0;k2=1;}else{i1=0;j1=0;k1=1;i2=1;j2=0;k2=1;}}
+    else{if(y0<z0){i1=0;j1=0;k1=1;i2=0;j2=1;k2=1;}else if(x0<z0){i1=0;j1=1;k1=0;i2=0;j2=1;k2=1;}else{i1=0;j1=1;k1=0;i2=1;j2=1;k2=0;}}
+    const x1=x0-i1+G3,y1=y0-j1+G3,z1=z0-k1+G3,x2=x0-i2+2*G3,y2=y0-j2+2*G3,z2=z0-k2+2*G3,x3=x0-1+3*G3,y3=y0-1+3*G3,z3=z0-1+3*G3;
+    const ii=i&255,jj=j&255,kk=k&255;let n=0,t0=.6-x0*x0-y0*y0-z0*z0;
+    if(t0>0){const g=grad[perm[ii+perm[jj+perm[kk]]]%12];t0*=t0;n+=t0*t0*(g[0]*x0+g[1]*y0+g[2]*z0);}
+    let t1=.6-x1*x1-y1*y1-z1*z1;if(t1>0){const g=grad[perm[ii+i1+perm[jj+j1+perm[kk+k1]]]%12];t1*=t1;n+=t1*t1*(g[0]*x1+g[1]*y1+g[2]*z1);}
+    let t2=.6-x2*x2-y2*y2-z2*z2;if(t2>0){const g=grad[perm[ii+i2+perm[jj+j2+perm[kk+k2]]]%12];t2*=t2;n+=t2*t2*(g[0]*x2+g[1]*y2+g[2]*z2);}
+    let t3=.6-x3*x3-y3*y3-z3*z3;if(t3>0){const g=grad[perm[ii+1+perm[jj+1+perm[kk+1]]]%12];t3*=t3;n+=t3*t3*(g[0]*x3+g[1]*y3+g[2]*z3);}
+    return 32*n;
+  };
+})();
+
+const canvas=document.getElementById('blob');
+let engine=null;
+if(window.THREE){
+  const renderer=new THREE.WebGLRenderer({canvas,alpha:true,antialias:true});
+  renderer.setPixelRatio(Math.min(devicePixelRatio||1,2));
+  const scene=new THREE.Scene();
+  const cam=new THREE.PerspectiveCamera(42,1,.1,14); cam.position.z=7;
+  const geo=new THREE.SphereGeometry(1,96,64);
+  const base=geo.attributes.position.array.slice();
+  const mat=new THREE.MeshStandardMaterial({color:0xc9a233,roughness:.32,metalness:.22,emissive:0x4a3a08,emissiveIntensity:.5});
+  const mesh=new THREE.Mesh(geo,mat); scene.add(mesh);
+  scene.add(new THREE.AmbientLight(0x4a4020,2.2));
+  const l1=new THREE.PointLight(0xfff3cf,55); l1.position.set(3,2.8,4); scene.add(l1);
+  const l2=new THREE.PointLight(0xc9a233,32); l2.position.set(-3.2,-2,3); scene.add(l2);
+  const cur={main:new THREE.Color(0xc9a233),emis:new THREE.Color(0x4a3a08),l1:new THREE.Color(0xfff3cf),l2:new THREE.Color(0xc9a233)};
+  const tgt={main:new THREE.Color(0xc9a233),emis:new THREE.Color(0x4a3a08),l1:new THREE.Color(0xfff3cf),l2:new THREE.Color(0xc9a233)};
+  let hover=0,hT=0,mx=0,my=0,exc=0,level=0;
+  canvas.addEventListener('pointerenter',()=>hT=1);
+  canvas.addEventListener('pointerleave',()=>hT=0);
+  canvas.addEventListener('pointermove',e=>{const r=canvas.getBoundingClientRect();
+    const nx=(e.clientX-r.left)/r.width*2-1,ny=-((e.clientY-r.top)/r.height*2-1);
+    exc=Math.min(1,exc+Math.hypot(nx-mx,ny-my)*1.4);mx=nx;my=ny;});
+  function resize(){const r=canvas.parentElement.getBoundingClientRect();
+    renderer.setSize(Math.max(2,r.width),Math.max(2,r.height),false);}
+  resize();addEventListener('resize',resize);
+  const pos=geo.attributes.position,v=new THREE.Vector3(),mdir=new THREE.Vector3(),q=new THREE.Quaternion();
+  engine={
+    setTone(t){tgt.main.setHex(t.main);tgt.emis.setHex(t.emis);tgt.l1.setHex(t.l1);tgt.l2.setHex(t.l2);},
+    setLevel(l){level=l;},
+    frame(t){
+      hover+=(hT-hover)*0.06; exc*=0.955;
+      cur.main.lerp(tgt.main,0.04);cur.emis.lerp(tgt.emis,0.04);cur.l1.lerp(tgt.l1,0.04);cur.l2.lerp(tgt.l2,0.04);
+      mat.color.copy(cur.main); mat.emissive.copy(cur.emis); l1.color.copy(cur.l1); l2.color.copy(cur.l2);
+      const amp=.12+hover*.07+exc*.16+level*.6;
+      q.copy(mesh.quaternion).invert();
+      mdir.set(mx,my,.85).normalize().applyQuaternion(q);
+      for(let i=0;i<pos.count;i++){
+        v.set(base[i*3],base[i*3+1],base[i*3+2]);
+        const n=simplex(v.x*1.4+t*.24,v.y*1.4+t*.16,v.z*1.4);
+        let bump=0;
+        if(hover>.02){const d=v.dot(mdir);if(d>.45){bump=(d-.45)/.55;bump=bump*bump*.5*hover*(.6+exc);}}
+        const s=1+amp*n+bump; pos.setXYZ(i,v.x*s,v.y*s,v.z*s);
+      }
+      pos.needsUpdate=true; geo.computeVertexNormals();
+      mesh.rotation.y=t*(.09-hover*.05); mesh.rotation.x=Math.sin(t*.07)*.14;
+      renderer.render(scene,cam);
+    }
+  };
+  (function loop(ts){engine.frame((ts||0)*0.001);requestAnimationFrame(loop);})();
+}
+
+/* ═══ audio + list — the playing track paints the blob ═══ */
+const player=document.getElementById('player');
+let AC=null,analyser=null,srcNode=null,vuData=null,levelRAF=null;
+function ensureGraph(){
+  if(AC)return;
+  AC=new (window.AudioContext||window.webkitAudioContext)();
+  srcNode=AC.createMediaElementSource(player);
+  analyser=AC.createAnalyser(); analyser.fftSize=256;
+  srcNode.connect(analyser); analyser.connect(AC.destination);
+  vuData=new Uint8Array(analyser.frequencyBinCount);
+  (function lvl(){
+    if(analyser){analyser.getByteFrequencyData(vuData);
+      let s=0;for(let i=0;i<vuData.length;i++)s+=vuData[i];
+      const l=player.paused?0:s/vuData.length/255;
+      if(engine)engine.setLevel(l);}
+    levelRAF=requestAnimationFrame(lvl);
+  })();
+}
+let playingIdx=-1;
+const relBox=document.getElementById('rel');
+const nowEl=document.getElementById('now'), nowTitle=document.getElementById('nowTitle');
+function hex(n){return '#'+n.toString(16).padStart(6,'0');}
+
+RELEASES.forEach((r,i)=>{
+  const el=document.createElement('div');
+  el.className='track'; el.dataset.i=i;
+  el.innerHTML=`
+    <div class="ti"><b>${r.title}</b><em>${r.tag}</em></div>
+    <button class="pc" aria-label="play">▶</button>`;
+  el.addEventListener('click',()=>toggle(i));
+  relBox.appendChild(el);
+});
+
+function paintList(){
+  [...relBox.children].forEach((el,i)=>{
+    el.classList.toggle('playing',i===playingIdx);
+    el.querySelector('.pc').textContent = (i===playingIdx && !player.paused)?'❚❚':'▶';
+  });
+}
+function toggle(i){
+  ensureGraph(); if(AC.state==='suspended')AC.resume();
+  if(i===playingIdx){ player.paused?player.play():player.pause(); paintList(); return; }
+  playingIdx=i;
+  const r=RELEASES[i];
+  player.src=r.file; player.play().catch(()=>{});
+  if(engine)engine.setTone(r.tone);
+  nowTitle.textContent=r.title; nowEl.classList.add('show');
+  paintList();
+}
+player.addEventListener('play',paintList);
+player.addEventListener('pause',paintList);
+player.addEventListener('ended',()=>{ /* auto-advance */
+  toggle((playingIdx+1)%RELEASES.length);
+});
+</script>
+</body>
+</html>

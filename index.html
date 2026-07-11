@@ -1,0 +1,1265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MiKS · Afro House</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@200;300;400;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --coffee:#161009;
+    --coffee-2:#1f1710;
+    --panel:#241a11;
+    --bone:#f0e7d8;
+    --sand:#cdb896;
+    --mist:#8f8069;
+    --clay:#c9552e;
+    --ochre:#e09f3e;
+    --gold:#f3c969;
+    --moss:#7a8450;
+    --hair:rgba(224,159,62,.22);
+    --hair-dim:rgba(224,159,62,.12);
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{min-height:100%}
+  body{
+    background:
+      radial-gradient(ellipse 70% 50% at 18% 20%, rgba(201,85,46,.10), transparent 65%),
+      radial-gradient(ellipse 60% 55% at 84% 75%, rgba(224,159,62,.08), transparent 65%),
+      var(--coffee);
+    color:var(--bone);
+    font-family:'Sora',sans-serif;
+    overflow-x:hidden;
+  }
+  .mono{font-family:'IBM Plex Mono',monospace}
+  .label{
+    font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.28em;
+    text-transform:uppercase;color:var(--mist);font-weight:500;
+  }
+
+  /* ── mudcloth motif bands ─────────────────── */
+  .motif{
+    height:14px;width:100%;opacity:.55;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='14' viewBox='0 0 56 14'%3E%3Cg fill='none' stroke='%23e09f3e' stroke-width='1.4'%3E%3Cpath d='M0 11 L7 3 L14 11'/%3E%3Cpath d='M14 11 L21 3 L28 11'/%3E%3Ccircle cx='35' cy='7' r='2.4'/%3E%3Cpath d='M42 3 v8 M46 3 v8 M50 3 v8'/%3E%3C/g%3E%3C/svg%3E");
+    background-repeat:repeat-x;background-position:center;
+  }
+
+  /* ── video background: foggy, focusing near the cursor ── */
+  #bg{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;background:var(--coffee)}
+  #bg video{
+    position:absolute;left:50%;top:50%;width:106%;height:106%;
+    transform:translate(-50%,-50%);object-fit:cover;
+  }
+  /* deep fog by default; the cursor circle reveals the milder blur */
+  #vFog{filter:blur(46px) brightness(.32) saturate(1.25)}
+  #vFocus{
+    filter:blur(18px) brightness(.55) saturate(1.25);
+    -webkit-mask-image:radial-gradient(circle var(--fr,270px) at var(--fx,-999px) var(--fy,-999px),
+      rgba(0,0,0,.95) 0%, rgba(0,0,0,.5) 48%, transparent 74%);
+    mask-image:radial-gradient(circle var(--fr,270px) at var(--fx,-999px) var(--fy,-999px),
+      rgba(0,0,0,.95) 0%, rgba(0,0,0,.5) 48%, transparent 74%);
+  }
+  #bg::after{content:"";position:absolute;inset:0;
+    background:radial-gradient(ellipse 120% 100% at 50% 40%, transparent 55%, rgba(10,6,3,.75));}
+  header,section,.band,footer{position:relative;z-index:2}
+
+  /* ── header: brand left, menu centered ────── */
+  header{
+    position:relative;display:flex;justify-content:center;align-items:center;
+    padding:22px 42px 16px;
+  }
+  .brand{
+    position:absolute;left:42px;top:50%;transform:translateY(-50%);
+    display:flex;align-items:center;gap:11px;
+  }
+  .brand img{height:34px;width:auto;opacity:.95}
+  .brand b{font-weight:600;letter-spacing:.32em;font-size:43px;color:var(--gold)}
+  .brand{display:flex;align-items:center;gap:13px}
+  .brand .orb{
+    width:20px;height:20px;border-radius:50%;
+    background:radial-gradient(circle at 32% 30%, var(--gold), var(--clay) 70%);
+    box-shadow:0 0 18px -2px rgba(224,159,62,.7);
+  }
+  .brand b{font-weight:600;letter-spacing:.3em;font-size:15px}
+  .brand span{font-family:'IBM Plex Mono';font-size:9px;letter-spacing:.3em;color:var(--mist);margin-top:3px;white-space:nowrap}
+  nav{display:flex;gap:30px}
+  nav a{color:var(--mist);text-decoration:none;font-family:'IBM Plex Mono';
+    font-size:10px;letter-spacing:.26em;transition:color .3s}
+  nav a:hover,nav a.on{color:var(--gold)}
+
+  /* ── hero: just the sentence, large ───────── */
+  .hero{text-align:center;padding:2vh 20px 2.4vh}
+  .tag{
+    font-family:'Sora',sans-serif;font-weight:200;
+    font-size:clamp(30px,4.6vw,52px);letter-spacing:.06em;line-height:1;
+    text-transform:lowercase;color:var(--bone);
+    text-shadow:0 2px 18px rgba(0,0,0,.6);
+  }
+  .tag b{font-weight:600;color:var(--gold)}
+
+  /* ── the band: open — the video runs behind everything ─ */
+  .band{background:none}
+  .stage{
+    display:grid;grid-template-columns:1fr minmax(540px,760px) 1fr;
+    grid-template-areas:"a m b";
+    align-items:center;gap:10px;
+    padding:22px 30px;max-width:1560px;margin:0 auto;
+  }
+  #crateA{grid-area:a}
+  #crateB{grid-area:b}
+  .stage .mixer{grid-area:m}
+  .after-band{height:3vh}
+
+  /* crates (spheres) */
+  .crate{display:flex;flex-direction:column;align-items:center;gap:16px;min-width:0}
+  .crate .label{color:var(--sand);text-shadow:0 1px 10px rgba(0,0,0,.85)}
+  .crate .label b{color:var(--gold);font-weight:600}
+  /* ── track roulette (replaces the blob) ───── */
+  .crate{gap:8px}
+  .orbit{
+    position:relative;width:min(330px,24vw);aspect-ratio:1;
+    display:flex;align-items:center;justify-content:center;
+    cursor:grab;touch-action:none;
+  }
+  .orbit:active{cursor:grabbing}
+  .orbit svg.ring{position:absolute;inset:-6%;width:112%;height:112%;
+    animation:spin 46s linear infinite;opacity:.5}
+  .orbit.rev svg.ring{animation-direction:reverse}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  /* the reel of plain names above / below the centred one */
+  .reel{position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:1}
+  .reel-item{
+    position:absolute;left:0;right:0;top:50%;text-align:center;
+    font-family:'Sora',sans-serif;font-weight:300;font-size:15px;color:var(--sand);
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 6%;
+    will-change:transform,opacity;text-shadow:0 1px 8px rgba(0,0,0,.7);
+  }
+  /* the centred name, rendered as a white particle swarm */
+  .ptext{
+    position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+    width:300%;height:60%;pointer-events:none;z-index:3;
+  }
+  /* mobile stepper arrows */
+  .reel-arrows{position:absolute;inset:0;z-index:4;display:none;pointer-events:none}
+  .rarrow{
+    position:absolute;left:50%;transform:translateX(-50%);pointer-events:auto;
+    background:rgba(20,14,8,.6);border:1px solid var(--hair-dim);border-radius:50%;
+    width:34px;height:34px;color:var(--gold);font-size:12px;cursor:pointer;
+  }
+  .rarrow.up{top:-6px} .rarrow.down{bottom:-6px}
+  /* static info under the reel */
+  .reel-info{
+    text-align:center;min-height:34px;z-index:5;position:relative;
+    font-family:'IBM Plex Mono';font-size:9.5px;letter-spacing:.16em;
+    color:var(--mist);text-transform:uppercase;line-height:1.7;
+    opacity:0;transition:opacity .4s;text-shadow:0 1px 8px rgba(0,0,0,.8);
+  }
+  .reel-info.show{opacity:1}
+  .reel-info .meta b{color:var(--sand);font-weight:500}
+  .reel-info .add{color:var(--gold);display:block;margin-top:1px;cursor:pointer}
+  .reel-info .add:hover{color:var(--bone)}
+
+  /* ── mixer ───────────────────────────────── */
+  .mixer{
+    background:linear-gradient(180deg,var(--panel),#1a120a);
+    border:1px solid var(--hair-dim);border-radius:22px;
+    box-shadow:0 40px 90px -30px rgba(0,0,0,.8), inset 0 1px 0 rgba(240,231,216,.05);
+    overflow:hidden;
+  }
+  .mixer .motif{opacity:.35}
+  .mixer-grid{
+    display:grid;grid-template-columns:1fr 168px 1fr;gap:0;
+    padding:22px 24px 24px;
+  }
+  .deck{min-width:0;display:flex;flex-direction:column;gap:12px}
+  .deck-head{display:flex;align-items:center;gap:12px}
+  .deck-head .dk{font-family:'IBM Plex Mono';font-size:10px;letter-spacing:.3em;color:var(--mist);white-space:nowrap}
+  .deck-head .dk b{color:var(--gold)}
+
+  /* inline track picker — expands upward with the whole catalog */
+  .tpick{position:relative;flex:1;min-width:0}
+  .tpick .tpick-btn{
+    width:100%;background:rgba(0,0,0,.28);border:1px solid var(--hair-dim);
+    border-radius:8px;color:var(--bone);text-align:left;cursor:pointer;
+    font-family:'IBM Plex Mono';font-size:10px;letter-spacing:.06em;
+    padding:8px 11px;outline:none;transition:border-color .3s;
+    display:flex;align-items:center;gap:8px;
+    white-space:nowrap;overflow:hidden;
+  }
+  .tpick .tpick-btn:hover{border-color:var(--ochre)}
+  .tpick .tpick-btn .cur{flex:1;overflow:hidden;text-overflow:ellipsis;color:var(--sand)}
+  .tpick .tpick-btn .caret{color:var(--mist);font-size:8px}
+  .tpick-list{
+    position:absolute;left:0;right:0;bottom:calc(100% + 5px);z-index:45;display:none;
+    max-height:230px;overflow-y:auto;
+    background:#1d150c;border:1px solid var(--hair);border-radius:10px;
+    box-shadow:0 -18px 44px -12px rgba(0,0,0,.75);
+    scrollbar-width:thin;scrollbar-color:var(--hair) transparent;
+  }
+  .tpick-list.open{display:block}
+  .titem{
+    font-family:'IBM Plex Mono';font-size:10px;letter-spacing:.05em;color:var(--sand);
+    padding:9px 12px;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+    display:flex;justify-content:space-between;gap:10px;
+  }
+  .titem span.b{color:var(--mist);font-size:8.5px}
+  .titem:hover{background:rgba(224,159,62,.14);color:var(--gold)}
+  .titem.on{color:var(--gold)}
+  .tname{
+    font-weight:300;font-size:15px;letter-spacing:.01em;min-height:22px;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--bone);
+  }
+  .tname.empty{color:var(--mist);font-size:12.5px}
+  .bpm-row{display:flex;align-items:center;gap:10px}
+  .bpm{
+    font-family:'IBM Plex Mono';font-size:26px;font-weight:600;color:var(--gold);
+    letter-spacing:.02em;line-height:1;min-width:104px;
+  }
+  .bpm small{font-size:10px;color:var(--mist);letter-spacing:.2em;font-weight:500;display:block;margin-top:3px}
+  .bpm .warn{color:var(--clay)}
+  /* pitch fader — fine tempo steps, DJ style */
+  .pitch{display:flex;align-items:center;gap:6px;flex:1;min-width:0;padding:0 4px}
+  .pbtn{
+    font-family:'IBM Plex Mono';font-size:12px;color:var(--mist);background:none;
+    border:1px solid var(--hair-dim);border-radius:6px;width:22px;height:22px;
+    cursor:pointer;line-height:1;flex:none;
+  }
+  .pbtn:hover{color:var(--gold);border-color:var(--hair)}
+  .pslider{
+    -webkit-appearance:none;appearance:none;flex:1;max-width:110px;height:3px;border-radius:2px;
+    background:rgba(224,159,62,.25);outline:none;cursor:ew-resize;
+  }
+  .pslider::-webkit-slider-thumb{
+    -webkit-appearance:none;width:12px;height:12px;border-radius:50%;
+    background:var(--gold);border:1px solid #7e5a12;
+  }
+  .pval{font-family:'IBM Plex Mono';font-size:9.5px;color:var(--sand);min-width:46px;text-align:right;flex:none}
+
+  .wave{position:relative;height:74px;border-radius:10px;overflow:hidden;
+    background:#150e07;border:1px solid var(--hair-dim);cursor:crosshair}
+  .wave canvas{position:absolute;inset:0;width:100%;height:100%}
+  .wave .empty-note{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+    font-family:'IBM Plex Mono';font-size:9px;letter-spacing:.24em;color:var(--mist)}
+
+  .transport{display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:center}
+  .tbtn{
+    font-family:'IBM Plex Mono';font-size:10px;letter-spacing:.18em;text-transform:uppercase;
+    background:rgba(224,159,62,.07);border:1px solid var(--hair);color:var(--bone);
+    border-radius:9px;padding:10px 15px;cursor:pointer;transition:all .25s;
+  }
+  .tbtn:hover{border-color:var(--ochre)}
+  .tbtn:disabled{opacity:.35;cursor:not-allowed}
+  .tbtn.play.on{background:var(--gold);border-color:var(--gold);color:#2a1206;font-weight:600}
+  .tbtn.sync{border-color:rgba(122,132,80,.5)}
+  .tbtn.sync.on{background:var(--moss);border-color:var(--moss);color:#f5f2e4;font-weight:600}
+  .loopset{display:flex;gap:5px;margin-left:10px}
+  .lbtn{
+    font-family:'IBM Plex Mono';font-size:9px;letter-spacing:.08em;
+    background:none;border:1px solid var(--hair-dim);color:var(--mist);
+    border-radius:7px;padding:8px 9px;cursor:pointer;transition:all .25s;
+  }
+  .lbtn:hover{color:var(--gold);border-color:var(--hair)}
+  .lbtn.on{background:var(--clay);border-color:var(--clay);color:#ffe9d6;font-weight:600}
+
+  .eq{display:flex;gap:14px;justify-content:space-between;padding:4px 2px 0}
+  .band{display:flex;flex-direction:column;align-items:center;gap:6px;flex:1}
+  .band input[type=range]{
+    -webkit-appearance:none;appearance:none;width:100%;height:4px;border-radius:2px;
+    background:linear-gradient(90deg,var(--clay),var(--ochre),var(--gold));
+    outline:none;cursor:pointer;
+  }
+  .band input::-webkit-slider-thumb{
+    -webkit-appearance:none;width:15px;height:15px;border-radius:50%;
+    background:var(--bone);border:2px solid var(--ochre);
+    box-shadow:0 2px 8px rgba(0,0,0,.5);
+  }
+  .band .label{font-size:8.5px;letter-spacing:.2em}
+  .band .val{font-family:'IBM Plex Mono';font-size:8.5px;color:var(--sand)}
+
+  /* center strip */
+  .center{
+    display:flex;flex-direction:column;align-items:center;justify-content:space-between;
+    padding:4px 16px;gap:14px;border-left:1px solid var(--hair-dim);border-right:1px solid var(--hair-dim);
+  }
+  .mixlogo{width:74px;height:auto;opacity:.92;filter:drop-shadow(0 2px 10px rgba(0,0,0,.5))}
+  .vu{display:flex;gap:8px;height:104px;align-items:flex-end}
+  .vu .col{width:12px;height:100%;border-radius:6px;background:#150e07;
+    border:1px solid var(--hair-dim);position:relative;overflow:hidden}
+  .vu .fill{position:absolute;left:0;right:0;bottom:0;height:0%;
+    background:linear-gradient(180deg,var(--clay),var(--ochre) 40%,var(--gold));
+    transition:height .06s linear}
+  .xf{width:100%;display:flex;flex-direction:column;gap:8px;align-items:center}
+  .xf-row{display:flex;align-items:center;gap:9px;width:100%}
+  .xf-row b{font-family:'IBM Plex Mono';font-size:10px;color:var(--mist)}
+  .xf input[type=range]{
+    -webkit-appearance:none;appearance:none;flex:1;height:34px;background:transparent;cursor:ew-resize;
+  }
+  .xf input::-webkit-slider-runnable-track{
+    height:6px;border-radius:3px;
+    background:linear-gradient(90deg,var(--gold),var(--clay) 50%,var(--gold));
+    border:1px solid var(--hair-dim);
+  }
+  .xf input::-webkit-slider-thumb{
+    -webkit-appearance:none;width:20px;height:30px;border-radius:6px;margin-top:-13px;
+    background:linear-gradient(180deg,var(--bone),var(--sand));
+    border:1px solid #7e3018;box-shadow:0 3px 10px rgba(0,0,0,.6);
+  }
+  .center .note{font-family:'IBM Plex Mono';font-size:8px;letter-spacing:.14em;
+    color:var(--mist);text-align:center;line-height:1.7;text-transform:uppercase}
+
+  footer{padding:10px 0 26px;text-align:center}
+  footer .label{font-size:9px}
+
+  /* toast for honest errors */
+  #toast{
+    position:fixed;bottom:26px;left:50%;transform:translateX(-50%) translateY(20px);
+    background:#2a190c;border:1px solid var(--hair);border-radius:12px;color:var(--sand);
+    font-family:'IBM Plex Mono';font-size:11px;letter-spacing:.05em;padding:13px 22px;
+    opacity:0;transition:all .4s;z-index:90;max-width:86vw;text-align:center;
+  }
+  #toast.show{opacity:1;transform:translateX(-50%)}
+
+  @media (max-width:1180px){
+    .stage{
+      grid-template-columns:1fr 1fr;
+      grid-template-areas:"a b" "m m";
+      gap:20px;padding:26px 16px 30px;
+    }
+    .mixer{max-width:720px;margin:0 auto;width:100%}
+    .orbit{width:min(280px,36vw)}
+  }
+  @media (max-width:700px){
+    header{padding:16px 16px 12px}
+    .brand{left:16px}
+    .brand img{height:18px}
+    .brand b{font-size:11px;letter-spacing:.2em}
+    nav{gap:12px;margin-left:96px}
+    nav a{font-size:8px;letter-spacing:.1em}
+    .hero{padding:1.4vh 12px 1.6vh}
+    .tag{letter-spacing:.05em;font-size:22px}
+    .reel-arrows{display:block}       /* steppers on touch */
+    .mixer-grid{grid-template-columns:1fr;gap:22px;padding:18px 18px 22px}
+    .center{border:none;border-top:1px solid var(--hair-dim);border-bottom:1px solid var(--hair-dim);
+      padding:16px 4px;flex-direction:column}
+    .vu{height:52px;width:100%;flex-direction:row;align-items:flex-end}
+    .vu .col{flex:1;height:100%}
+    .orbit{width:min(200px,40vw)}
+    .after-band{height:3vh}
+  }
+
+  /* ── rotate-to-landscape gate (phones held upright) ── */
+  #rotate{
+    position:fixed;inset:0;z-index:120;display:none;
+    flex-direction:column;align-items:center;justify-content:center;gap:14px;
+    background:var(--coffee);text-align:center;padding:30px;
+  }
+  .rot-icon{font-size:54px;color:var(--gold);
+    transform:rotate(90deg);animation:rotpulse 2.2s ease-in-out infinite}
+  @keyframes rotpulse{0%,100%{transform:rotate(90deg)}50%{transform:rotate(0deg)}}
+  .rot-title{font-family:'Sora';font-weight:300;font-size:26px;color:var(--bone);text-transform:lowercase}
+  .rot-sub{font-family:'IBM Plex Mono';font-size:10px;letter-spacing:.3em;color:var(--mist);text-transform:uppercase}
+  @media (max-width:900px) and (orientation:portrait){
+    #rotate{display:flex}
+  }
+  /* landscape phone: spheres up top, scroll to the mixer */
+  @media (max-height:560px) and (orientation:landscape){
+    header{padding:10px 16px 6px}
+    .hero{padding:0.6vh 12px 0.8vh}
+    .tag{font-size:16px}
+    .stage{grid-template-columns:1fr 1fr;grid-template-areas:"a b" "m m";gap:10px;padding:10px 12px 18px}
+    .orbit{width:min(150px,26vw)}
+    .reel-arrows{display:block}
+    .after-band{height:1vh}
+  }
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <filter id="goo">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="7" result="blur"/>
+      <feColorMatrix in="blur" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 22 -10" result="goo"/>
+      <feComposite in="SourceGraphic" in2="goo" operator="atop"/>
+    </filter>
+  </defs>
+</svg>
+
+<div id="bg">
+  <video id="vFog"   src="media/bg.mp4" muted loop playsinline autoplay></video>
+  <video id="vFocus" src="media/bg.mp4" muted loop playsinline autoplay></video>
+</div>
+
+<div id="rotate">
+  <div class="rot-icon">▭</div>
+  <p class="rot-title">turn your phone</p>
+  <p class="rot-sub">MiKS mixes in landscape</p>
+</div>
+
+<header>
+  <div class="brand"><img src="media/logo.png" alt="MiKS logo"><b>MiKS</b></div>
+  <nav>
+    <a href="index.html" class="on">HOME</a>
+    <a href="music.html">MUSIC</a>
+    <a href="tour.html">TOUR</a>
+    <a href="#" onclick="return false">PROJECTS</a>
+    <a href="#" onclick="return false">SHOP</a>
+    <a href="#" onclick="return false">CONTACT</a>
+  </nav>
+</header>
+
+<section class="hero">
+  <p class="tag">mix <b>me</b> with <b>me</b></p>
+</section>
+
+<div class="band">
+<div class="stage">
+  <!-- ── CRATE 1 ── -->
+  <div class="crate" id="crateA">
+    <div class="orbit" id="orbitA">
+      <svg class="ring" viewBox="0 0 100 100">
+        <g fill="none" stroke="#e09f3e" stroke-width=".7" opacity=".7">
+          <circle cx="50" cy="50" r="48" stroke-dasharray="1 4"/>
+          <g id="ticksA"></g>
+        </g>
+      </svg>
+      <div class="reel" id="reelA"></div>
+      <canvas class="ptext" id="ptA"></canvas>
+      <div class="reel-arrows" id="arrowsA">
+        <button class="rarrow up" data-side="a" aria-label="previous">▲</button>
+        <button class="rarrow down" data-side="a" aria-label="next">▼</button>
+      </div>
+    </div>
+    <div class="reel-info" id="infoA"></div>
+  </div>
+
+  <!-- ── MIXER ── -->
+  <div class="mixer">
+    <div class="mixer-grid">
+
+      <div class="deck" id="deckA">
+        <div class="deck-head">
+          <span class="dk">CRATE <b>1</b></span>
+          <div class="tpick" id="tpickA">
+            <button class="tpick-btn" id="tpickBtnA"><span class="cur">select a track</span><span class="caret">▲</span></button>
+            <div class="tpick-list" id="tlistA"></div>
+          </div>
+        </div>
+        <div class="tname empty" id="nameA">load a track from the left sphere</div>
+        <div class="bpm-row">
+          <div class="bpm"><span id="bpmA">—</span><small id="bpmNoteA">BPM</small></div>
+          <div class="pitch">
+            <button class="pbtn" data-deck="a" data-step="-0.5">−</button>
+            <input type="range" class="pslider" id="pitchSlA" data-deck="a" min="-8" max="8" step="0.1" value="0">
+            <button class="pbtn" data-deck="a" data-step="0.5">+</button>
+            <span class="pval" id="pitchA">+0.0%</span>
+          </div>
+          <span class="dk" id="timeA" style="margin-left:auto">0:00</span>
+        </div>
+        <div class="wave" id="waveA"><canvas></canvas><div class="empty-note">NO TRACK</div></div>
+        <div class="transport">
+          <button class="tbtn" id="backA" disabled title="Back to beginning">⏮</button>
+          <button class="tbtn play" id="playA" disabled>▶ PLAY</button>
+          <button class="tbtn sync" id="syncA" disabled>SYNC</button>
+          <div class="loopset">
+            <button class="lbtn" data-deck="a" data-loop="4">LOOP 4</button>
+            <button class="lbtn" data-deck="a" data-loop="8">8</button>
+            <button class="lbtn" data-deck="a" data-loop="16">16</button>
+          </div>
+        </div>
+        <div class="eq">
+          <div class="band"><input type="range" min="-26" max="6" value="0" step="1" data-deck="a" data-band="low"><span class="label">LOW</span><span class="val" id="eqAlow">0dB</span></div>
+          <div class="band"><input type="range" min="-26" max="6" value="0" step="1" data-deck="a" data-band="mid"><span class="label">MID</span><span class="val" id="eqAmid">0dB</span></div>
+          <div class="band"><input type="range" min="-26" max="6" value="0" step="1" data-deck="a" data-band="high"><span class="label">HIGH</span><span class="val" id="eqAhigh">0dB</span></div>
+        </div>
+      </div>
+
+      <div class="center">
+        <img class="mixlogo" src="media/logo.png" alt="MiKS">
+        <div class="vu">
+          <div class="col"><div class="fill" id="vuA"></div></div>
+          <div class="col"><div class="fill" id="vuB"></div></div>
+        </div>
+        <div class="xf">
+          <span class="label">BLEND</span>
+          <div class="xf-row"><b>A</b><input type="range" id="xfade" min="0" max="1000" value="500"><b>B</b></div>
+        </div>
+        <div class="note">SYNC RETUNES TEMPO &<br>PHASE-LOCKS BEAT GRIDS<br>· PITCH PRESERVED ·</div>
+      </div>
+
+      <div class="deck" id="deckB">
+        <div class="deck-head">
+          <span class="dk">CRATE <b>2</b></span>
+          <div class="tpick" id="tpickB">
+            <button class="tpick-btn" id="tpickBtnB"><span class="cur">select a track</span><span class="caret">▲</span></button>
+            <div class="tpick-list" id="tlistB"></div>
+          </div>
+        </div>
+        <div class="tname empty" id="nameB">load a track from the right sphere</div>
+        <div class="bpm-row">
+          <div class="bpm"><span id="bpmB">—</span><small id="bpmNoteB">BPM</small></div>
+          <div class="pitch">
+            <button class="pbtn" data-deck="b" data-step="-0.5">−</button>
+            <input type="range" class="pslider" id="pitchSlB" data-deck="b" min="-8" max="8" step="0.1" value="0">
+            <button class="pbtn" data-deck="b" data-step="0.5">+</button>
+            <span class="pval" id="pitchB">+0.0%</span>
+          </div>
+          <span class="dk" id="timeB" style="margin-left:auto">0:00</span>
+        </div>
+        <div class="wave" id="waveB"><canvas></canvas><div class="empty-note">NO TRACK</div></div>
+        <div class="transport">
+          <button class="tbtn" id="backB" disabled title="Back to beginning">⏮</button>
+          <button class="tbtn play" id="playB" disabled>▶ PLAY</button>
+          <button class="tbtn sync" id="syncB" disabled>SYNC</button>
+          <div class="loopset">
+            <button class="lbtn" data-deck="b" data-loop="4">LOOP 4</button>
+            <button class="lbtn" data-deck="b" data-loop="8">8</button>
+            <button class="lbtn" data-deck="b" data-loop="16">16</button>
+          </div>
+        </div>
+        <div class="eq">
+          <div class="band"><input type="range" min="-26" max="6" value="0" step="1" data-deck="b" data-band="low"><span class="label">LOW</span><span class="val" id="eqBlow">0dB</span></div>
+          <div class="band"><input type="range" min="-26" max="6" value="0" step="1" data-deck="b" data-band="mid"><span class="label">MID</span><span class="val" id="eqBmid">0dB</span></div>
+          <div class="band"><input type="range" min="-26" max="6" value="0" step="1" data-deck="b" data-band="high"><span class="label">HIGH</span><span class="val" id="eqBhigh">0dB</span></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── CRATE 2 ── -->
+  <div class="crate" id="crateB">
+    <div class="orbit rev" id="orbitB">
+      <svg class="ring" viewBox="0 0 100 100">
+        <g fill="none" stroke="#c9552e" stroke-width=".7" opacity=".7">
+          <circle cx="50" cy="50" r="48" stroke-dasharray="1 4"/>
+          <g id="ticksB"></g>
+        </g>
+      </svg>
+      <div class="reel" id="reelB"></div>
+      <canvas class="ptext" id="ptB"></canvas>
+      <div class="reel-arrows" id="arrowsB">
+        <button class="rarrow up" data-side="b" aria-label="previous">▲</button>
+        <button class="rarrow down" data-side="b" aria-label="next">▼</button>
+      </div>
+    </div>
+    <div class="reel-info" id="infoB"></div>
+  </div>
+</div>
+
+</div><!-- /band -->
+<div class="after-band"></div>
+
+<footer>
+  <span class="label" style="font-size:8.5px">© MiKS · ALL BLENDS LIVE · ALL RIGHTS RESERVED</span>
+</footer>
+
+<div id="toast"></div>
+
+<script>
+/* ═════════════════════════════ helpers ═════════════════════════════ */
+const $=id=>document.getElementById(id);
+const toastEl=$('toast');let toastT=null;
+function toast(msg,ms=3800){toastEl.textContent=msg;toastEl.classList.add('show');
+  clearTimeout(toastT);toastT=setTimeout(()=>toastEl.classList.remove('show'),ms);}
+function fmtTime(s){s=Math.max(0,s|0);return (s/60|0)+':'+String(s%60).padStart(2,'0');}
+
+/* decorative ring ticks (african triangle motif) */
+function ticks(gid,n){const g=$(gid);let h='';
+  for(let i=0;i<n;i++){const a=i/n*360;
+    h+=`<path d="M50 1.5 L48.4 5 L51.6 5 Z" transform="rotate(${a} 50 50)" fill="${gid==='ticksA'?'#e09f3e':'#c9552e'}" stroke="none"/>`;}
+  g.innerHTML=h;}
+ticks('ticksA',28);ticks('ticksB',28);
+
+/* ═════════════════════════ audio graph ═════════════════════════ */
+let AC=null;
+function ctx(){ if(!AC){AC=new (window.AudioContext||window.webkitAudioContext)();}
+  if(AC.state==='suspended')AC.resume(); return AC; }
+
+class Deck{
+  constructor(key){
+    this.key=key; this.track=null; this.rate=1; this.loopBeats=0;
+    this.el=new Audio(); this.el.preservesPitch=true; this.el.webkitPreservesPitch=true;
+    this.nodes=null; this.synced=false;
+  }
+  ensureGraph(){
+    if(this.nodes)return;
+    const c=ctx();
+    const src=c.createMediaElementSource(this.el);
+    const low=c.createBiquadFilter(); low.type='lowshelf'; low.frequency.value=200;
+    const mid=c.createBiquadFilter(); mid.type='peaking'; mid.frequency.value=1000; mid.Q.value=0.9;
+    const high=c.createBiquadFilter(); high.type='highshelf'; high.frequency.value=4000;
+    const gain=c.createGain();
+    const an=c.createAnalyser(); an.fftSize=256;
+    src.connect(low); low.connect(mid); mid.connect(high); high.connect(gain);
+    gain.connect(an); an.connect(master());
+    this.nodes={low,mid,high,gain,an};
+    this.vuData=new Uint8Array(an.frequencyBinCount);
+  }
+  load(track){
+    this.ensureGraph();
+    clearInterval(this._chase);this._chase=null;
+    this.stop();
+    this.track=track; this.rate=1; this.synced=false; this.loopBeats=0; this.loopStart=0;
+    this.el.src=track.url; this.el.playbackRate=1;
+    ui.onLoad(this);
+  }
+  get playing(){return this.track&&!this.el.paused;}
+  play(){ if(!this.track)return; ctx(); this.el.play().catch(e=>toast('Playback blocked: '+e.message)); }
+  pause(){ this.el.pause(); }
+  stop(){ this.el.pause(); this.el.currentTime=0; }
+  seek(t){ if(this.track) this.el.currentTime=Math.max(0,Math.min(this.track.duration-0.05,t)); }
+  /* effective bpm right now */
+  effBpm(){ return this.track&&this.track.bpm ? this.track.bpm*this.el.playbackRate : null; }
+  setRate(r){ this.el.playbackRate=r; this.rate=r; }
+  /* beat position (in beats, track grid) at current moment */
+  beatPos(){ const t=this.track; if(!t||!t.bpm)return null;
+    return (this.el.currentTime - t.offset) / (60/t.bpm); }
+  /* SYNC: match other's effective bpm, then phase-align beat grids */
+  sync(other){
+    const t=this.track, o=other.track;
+    if(!t||!t.bpm){toast('This deck has no beat grid — SYNC unavailable.');return false;}
+    if(!o||!o.bpm){toast('The other deck has no beat grid to sync to.');return false;}
+    const target=other.effBpm();
+    const rate=target/t.bpm;
+    if(rate<0.5||rate>2){toast('Tempos too far apart to sync sensibly ('+t.bpm.toFixed(1)+' → '+target.toFixed(1)+').');return false;}
+    this.setRate(rate);
+    /* phase align: coarse jump if far, then platter-style micro-chase */
+    if(this.playing&&other.playing){
+      const myB=this.beatPos(), otB=other.beatPos();
+      let d=((otB-myB)%1+1)%1; if(d>0.5)d-=1;      /* shortest path, in beats */
+      if(Math.abs(d)>0.12) this.el.currentTime += d*(60/t.bpm);
+      this.phaseChase(other,rate);
+    }
+    this.synced=true;
+    ui.onSync(this);
+    return true;
+  }
+  /* nudge the "platter": tiny temporary rate bends keep the grids locked
+     for as long as sync is engaged — corrections stay ≤1.5%, inaudible. */
+  phaseChase(other,baseRate){
+    clearInterval(this._chase);
+    const frac=x=>((x%1)+1)%1;
+    this._chase=setInterval(()=>{
+      if(!this.track||!this.synced){
+        /* sync released (e.g. manual pitch) — stop without touching the rate */
+        clearInterval(this._chase);this._chase=null;return;
+      }
+      if(!(this.playing&&other.playing)){this.el.playbackRate=baseRate;return;}
+      let d=frac(other.beatPos())-frac(this.beatPos());
+      if(d>0.5)d-=1; if(d<-0.5)d+=1;
+      if(Math.abs(d)>0.2){this.el.currentTime+=d*(60/this.track.bpm);return;}
+      if(Math.abs(d)<0.004){this.el.playbackRate=baseRate;return;}
+      const bend=Math.max(-0.015,Math.min(0.015,d*1.2));
+      this.el.playbackRate=baseRate*(1+bend);
+    },140);
+  }
+  /* beat-snapped loop */
+  setLoop(beats){
+    const t=this.track; if(!t)return;
+    if(this.loopBeats===beats){this.loopBeats=0; ui.onLoop(this); return;}
+    if(!t.bpm){toast('No beat grid on this track — loop uses raw seconds.');}
+    const bd=t.bpm?60/t.bpm:0.5;
+    const cur=this.el.currentTime;
+    this.loopStart=t.bpm? t.offset+Math.floor((cur-t.offset)/bd)*bd : cur;
+    this.loopBeats=beats;
+    ui.onLoop(this);
+  }
+  tickLoop(){
+    if(!this.loopBeats||!this.track)return;
+    const bd=this.track.bpm?60/this.track.bpm:0.5;
+    const end=this.loopStart+this.loopBeats*bd;
+    if(this.el.currentTime>=end) this.el.currentTime=this.loopStart;
+  }
+  level(){
+    if(!this.nodes)return 0;
+    this.nodes.an.getByteFrequencyData(this.vuData);
+    let s=0;for(let i=0;i<this.vuData.length;i++)s+=this.vuData[i];
+    return s/this.vuData.length/255;
+  }
+}
+let _master=null;
+function master(){
+  if(_master)return _master;
+  const c=ctx();
+  const comp=c.createDynamicsCompressor();
+  comp.threshold.value=-8;comp.ratio.value=4;
+  comp.connect(c.destination);
+  _master=comp;return _master;
+}
+
+const decks={a:new Deck('a'), b:new Deck('b')};
+window.BLENDER={decks};  /* exposed for testing (crates added below) */
+
+/* crossfader — equal power */
+function applyXfade(){
+  const x=$('xfade').value/1000;
+  if(decks.a.nodes)decks.a.nodes.gain.gain.value=Math.cos(x*Math.PI/2);
+  if(decks.b.nodes)decks.b.nodes.gain.gain.value=Math.sin(x*Math.PI/2);
+}
+$('xfade').addEventListener('input',applyXfade);
+
+/* EQ */
+document.querySelectorAll('.band input').forEach(sl=>{
+  sl.addEventListener('input',()=>{
+    const d=decks[sl.dataset.deck]; d.ensureGraph();
+    d.nodes[sl.dataset.band].gain.value=+sl.value;
+    $('eq'+sl.dataset.deck.toUpperCase()+sl.dataset.band).textContent=(+sl.value>0?'+':'')+sl.value+'dB';
+  });
+});
+
+/* ═════════════════ BPM + beat-grid detection ═════════════════ */
+/* Low-band onset energy, autocorrelated over 70–180 BPM.
+   Returns {bpm, offset, confidence} or null if no stable pulse. */
+function detectBeats(buf){
+  const sr=buf.sampleRate;
+  const ch=buf.numberOfChannels>1
+    ? (()=>{const a=buf.getChannelData(0),b=buf.getChannelData(1),m=new Float32Array(a.length);
+        for(let i=0;i<a.length;i++)m[i]=(a[i]+b[i])*0.5;return m;})()
+    : buf.getChannelData(0);
+  /* analyse up to 100s starting after any silence */
+  const maxN=Math.min(ch.length, sr*100);
+  const hop=Math.round(sr*0.01);            /* 10ms hops */
+  const frames=Math.floor(maxN/hop)-1;
+  if(frames<800)return null;                /* <8s: too short */
+  /* crude low-band: 4-sample averaged then energy */
+  const env=new Float32Array(frames);
+  for(let f=0;f<frames;f++){
+    let e=0,i0=f*hop,prev=0;
+    for(let i=0;i<hop;i+=4){
+      const v=(ch[i0+i]+ch[i0+i+1]+ch[i0+i+2]+ch[i0+i+3])*0.25; /* ~5.5kHz lp-ish */
+      e+=v*v; prev=v;
+    }
+    env[f]=Math.sqrt(e/(hop/4));
+  }
+  /* onset = positive energy flux */
+  const on=new Float32Array(frames);
+  for(let f=1;f<frames;f++){const d=env[f]-env[f-1];on[f]=d>0?d:0;}
+  /* normalize */
+  let mx=0;for(let f=0;f<frames;f++)if(on[f]>mx)mx=on[f];
+  if(mx<=0)return null;
+  for(let f=0;f<frames;f++)on[f]/=mx;
+  /* autocorrelation over beat periods 70–180 bpm (in hops of 10ms) */
+  const minLag=Math.round(60/180/0.01), maxLag=Math.round(60/70/0.01);
+  const corr=new Float32Array(maxLag+2);
+  let bestLag=0,bestV=0,sumV=0,cnt=0;
+  for(let lag=minLag;lag<=maxLag;lag++){
+    let v=0;
+    for(let f=0;f<frames-lag;f++)v+=on[f]*on[f+lag];
+    corr[lag]=v;
+    /* slight preference toward 100–135bpm */
+    const bpm=60/(lag*0.01);
+    const w=bpm>=100&&bpm<=135?1.08:(bpm>=85&&bpm<=150?1:0.9);
+    const wv=v*w; sumV+=wv; cnt++;
+    if(wv>bestV){bestV=wv;bestLag=lag;}
+  }
+  const mean=sumV/cnt;
+  const confidence=bestV/(mean||1);
+  if(confidence<1.25)return null;           /* no clear pulse — be honest */
+  /* parabolic interpolation around the peak → sub-hop tempo precision */
+  let lag=bestLag;
+  const y0=corr[bestLag-1]||0,y1=corr[bestLag],y2=corr[bestLag+1]||0;
+  const denom=(y0-2*y1+y2);
+  if(denom!==0){
+    const delta=0.5*(y0-y2)/denom;
+    if(Math.abs(delta)<1) lag=bestLag+delta;
+  }
+  let bpm=60/(lag*0.01);
+  /* find beat phase: offset (in hops) maximizing comb sum (integer grid) */
+  const L=Math.round(lag);
+  let bestOff=0,bestS=-1;
+  for(let off=0;off<L;off++){
+    let s=0,n=0;
+    for(let f=off;f<frames;f+=L){s+=on[f]+((on[f-1]||0)+(on[f+1]||0))*0.5;n++;}
+    s/=n;
+    if(s>bestS){bestS=s;bestOff=off;}
+  }
+  /* refinement: snap each predicted beat to its true onset peak, then
+     least-squares (beat#, peak position) → sub-hop period. Averaging over
+     the whole track collapses the 10ms quantization error. */
+  const win=Math.max(3,Math.round(lag*0.12));
+  const pts=[];
+  for(let k=0;;k++){
+    const pred=Math.round(bestOff+k*lag);
+    if(pred>=frames-win)break;
+    let pi=-1,pv=0.06;                       /* require a real peak */
+    for(let j=Math.max(0,pred-win);j<=pred+win;j++)
+      if(on[j]>pv){pv=on[j];pi=j;}
+    if(pi>=0)pts.push([k,pi]);
+  }
+  if(pts.length>=8){
+    const fit=arr=>{
+      let n=arr.length,sx=0,sy=0,sxx=0,sxy=0;
+      for(const[x,y]of arr){sx+=x;sy+=y;sxx+=x*x;sxy+=x*y;}
+      const m=(n*sxy-sx*sy)/(n*sxx-sx*sx);
+      return {m, b:(sy-m*sx)/n};
+    };
+    let {m,b}=fit(pts);
+    /* drop outliers (>2 hops off the line) and refit once */
+    const inliers=pts.filter(([x,y])=>Math.abs(y-(m*x+b))<=2);
+    if(inliers.length>=8){
+      ({m,b}=fit(inliers));
+      if(m>minLag*0.9&&m<maxLag*1.1){
+        lag=m; bpm=60/(lag*0.01); bestOff=Math.max(0,b);
+      }
+    }
+  }
+  return {bpm:+bpm.toFixed(3), offset:+(bestOff*0.01).toFixed(3), confidence:+confidence.toFixed(2)};
+}
+
+/* waveform peaks for the scroller */
+function makePeaks(buf,n=560){
+  const ch=buf.getChannelData(0), step=Math.floor(ch.length/n), out=new Float32Array(n);
+  for(let i=0;i<n;i++){let m=0,i0=i*step;
+    for(let j=0;j<step;j+=7){const v=Math.abs(ch[i0+j]);if(v>m)m=v;}
+    out[i]=m;}
+  return out;
+}
+
+/* ═════════════════════ track loading ═════════════════════
+   One shared catalog — every track is available to both crates. */
+const catalog=[];
+const crates={a:catalog, b:catalog};      /* both decks draw from the same list */
+async function addFiles(_side,files){
+  for(const file of files){
+    if(!file.type.startsWith('audio')&&!/\.(mp3|wav|m4a|aac|ogg|flac|aif)/i.test(file.name)){
+      continue;}
+    const name=file.name.replace(/\.[^.]+$/,'');
+    if(catalog.some(t=>t.name===name))continue;         /* dedupe */
+    const url=URL.createObjectURL(file);
+    let buf=null,beats=null;
+    try{
+      const ab=await file.arrayBuffer();
+      buf=await ctx().decodeAudioData(ab);
+      beats=detectBeats(buf);
+    }catch(e){
+      toast('Could not decode "'+name+'" — '+e.message);continue;
+    }
+    const track={
+      name,url,duration:buf.duration,peaks:makePeaks(buf),
+      genre:'AFRO HOUSE',
+      bpm:beats?beats.bpm:null, offset:beats?beats.offset:0,
+      confidence:beats?beats.confidence:0
+    };
+    catalog.push(track);
+    onCatalogChange();
+  }
+}
+let _catalogCbs=[];
+function onCatalogChange(){_catalogCbs.forEach(fn=>fn());}
+
+/* ═══ particle-swarm track titles, conjured over the blobs ═══════
+   Hover a blob → a random track name assembles from white ink-dash
+   particles above it. The cursor carves the swarm; leave, and it
+   drifts apart and fades. Click while it's shown to load the track. */
+const pointer={x:-9999,y:-9999};
+addEventListener('pointermove',e=>{pointer.x=e.clientX;pointer.y=e.clientY;});
+
+function makePtext(side){
+  const S=side.toUpperCase(), orbit=$('orbit'+S);
+  const cv=document.createElement('canvas');
+  cv.className='ptext'; orbit.appendChild(cv);
+  const ctx=cv.getContext('2d');
+  const N=2600;
+  const px=new Float32Array(N),py=new Float32Array(N),
+        vx=new Float32Array(N),vy=new Float32Array(N),
+        tx=new Float32Array(N),ty=new Float32Array(N),
+        ang=new Float32Array(N),ln=new Float32Array(N),sp=new Float32Array(N);
+  const gold=new Uint8Array(N);
+  for(let i=0;i<N;i++){ang[i]=Math.random()*6.28;ln[i]=2+Math.random()*3.4;
+    sp[i]=.06+Math.random()*.05;gold[i]=Math.random()<.06?1:0;}
+  let live=0, alpha=0, alphaT=0, W=0, H=0;
+  const DPR=Math.min(devicePixelRatio||1,2);
+  const off=document.createElement('canvas');
+  const octx=off.getContext('2d',{willReadFrequently:true});
+  function resize(){
+    const r=cv.getBoundingClientRect();
+    W=r.width; H=r.height;
+    cv.width=W*DPR; cv.height=H*DPR;
+    ctx.setTransform(DPR,0,0,DPR,0,0);
+  }
+  resize(); addEventListener('resize',resize);
+  function show(word){
+    resize();
+    const ow=1000, oh=280;
+    off.width=ow; off.height=oh;
+    octx.clearRect(0,0,ow,oh);
+    octx.fillStyle='#000';
+    let fs=170; octx.font=`600 ${fs}px Sora,sans-serif`;
+    const mw=octx.measureText(word).width;
+    if(mw>ow*.94){fs*=ow*.94/mw; octx.font=`600 ${fs}px Sora,sans-serif`;}
+    octx.textAlign='center'; octx.textBaseline='middle';
+    octx.fillText(word,ow/2,oh/2);
+    const data=octx.getImageData(0,0,ow,oh).data;
+    const pts=[];
+    for(let y=0;y<oh;y+=3)for(let x=0;x<ow;x+=3)
+      if(data[(y*ow+x)*4+3]>128)pts.push([x/ow,y/oh]);
+    if(!pts.length)return;
+    const asp=ow/oh;
+    /* ~30% smaller than before: size to the wheel, not the viewport */
+    const orbW=orbit.clientWidth;
+    let dw=Math.min(orbW*1.02, W*0.9), dh=dw/asp;
+    if(dh>H*.94){dh=H*.94; dw=dh*asp;}
+    /* anchor inward so the outer edge never leaves the screen:
+       crate A grows rightward, crate B grows leftward */
+    let ox = side==='a' ? (W/2 - orbW*0.5) : (W/2 + orbW*0.5 - dw);
+    const rect=cv.getBoundingClientRect(), pad=12;
+    ox=Math.min(ox, innerWidth-pad-rect.left-dw);
+    ox=Math.max(ox, pad-rect.left);
+    ox=Math.max(4, Math.min(ox, W-dw-4));   /* never off the canvas itself */
+    const oy=(H-dh)/2;
+    live=Math.min(pts.length,N);
+    const fresh=alpha<0.05;
+    for(let i=0;i<live;i++){
+      const p=pts[(i*7919)%pts.length];
+      tx[i]=ox+p[0]*dw; ty[i]=oy+p[1]*dh;
+      if(fresh){                 /* conjured out of the wheel's heart */
+        px[i]=W/2+(Math.random()-.5)*60;
+        py[i]=H/2+(Math.random()-.5)*40;
+        vx[i]=vy[i]=0;
+      }                          /* else: morph from the previous name */
+    }
+    alphaT=1;
+  }
+  function hide(){
+    if(alphaT===0)return;
+    alphaT=0;
+    for(let i=0;i<live;i++){ /* drift apart while fading */
+      tx[i]+=(Math.random()-.5)*150;
+      ty[i]+=(Math.random()-.5)*110;
+    }
+  }
+  const t0=Math.random()*100;
+  function update(){
+    alpha+=(alphaT-alpha)*0.06;
+    if(alpha<0.012&&alphaT===0){if(W)ctx.clearRect(0,0,W,H);return;}
+    const r=cv.getBoundingClientRect();
+    const mx=pointer.x-r.left, my=pointer.y-r.top;
+    ctx.clearRect(0,0,W,H);
+    const wob=performance.now()*0.00045+t0;
+    for(let pass=0;pass<2;pass++){
+      ctx.beginPath();
+      for(let i=0;i<live;i++){
+        if(gold[i]!==pass)continue;
+        vx[i]+=(tx[i]-px[i])*sp[i]; vy[i]+=(ty[i]-py[i])*sp[i];
+        const dx2=px[i]-mx, dy2=py[i]-my, d2=dx2*dx2+dy2*dy2;
+        if(d2<4900){const d=Math.sqrt(d2)||1, f=(1-d/70)*7;
+          vx[i]+=dx2/d*f; vy[i]+=dy2/d*f;}
+        vx[i]*=.82; vy[i]*=.82;
+        px[i]+=vx[i]; py[i]+=vy[i];
+        const a2=ang[i]+Math.sin(wob+i*.37)*.3, l=ln[i]*.5;
+        const ca=Math.cos(a2)*l, sa=Math.sin(a2)*l;
+        ctx.moveTo(px[i]-ca,py[i]-sa); ctx.lineTo(px[i]+ca,py[i]+sa);
+      }
+      ctx.strokeStyle=pass?`rgba(243,201,105,${(.9*alpha).toFixed(3)})`
+                          :`rgba(255,255,255,${(.88*alpha).toFixed(3)})`;
+      ctx.lineWidth=pass?1.5:1.3;
+      ctx.stroke();
+    }
+  }
+  return {show,hide,update};
+}
+const ptext={a:makePtext('a'), b:makePtext('b')};
+const active={a:null,b:null};      /* the track currently centred in each reel */
+
+/* ═══ track roulette — a vertical wheel of names per crate ═══════
+   Auto-rotates (crate 1 down, crate 2 up). The centred name is drawn
+   as a white particle swarm and morphs into the next as it turns.
+   Drag the wheel to scrub; tap it (or its info line) to load the deck. */
+function makeReel(side){
+  const S=side.toUpperCase();
+  const orbit=$('orbit'+S), reel=$('reel'+S), info=$('info'+S);
+  let scroll=0, centerIdx=-1, dragging=false, lastY=0, moved=0;
+  const dir = side==='a' ? 1 : -1;        /* opposite auto directions   */
+  const AUTO = 0.0038;                     /* items/frame ≈ 4.5s per track */
+  const STEP = 0.6;                        /* radians between neighbours  */
+  let items=[];
+  function rebuild(){
+    reel.innerHTML=''; items=[];
+    catalog.forEach(t=>{
+      const d=document.createElement('div');
+      d.className='reel-item'; d.textContent=t.name;
+      reel.appendChild(d); items.push(d);
+    });
+    centerIdx=-1;
+  }
+  _catalogCbs.push(rebuild);
+  const wrap=(d,n)=>{d%=n; if(d>n/2)d-=n; if(d<-n/2)d+=n; return d;};
+  function updateInfo(){
+    const t=active[side]; if(!t){info.classList.remove('show');return;}
+    const bpm=t.bpm?Math.round(t.bpm)+' BPM':'NO BEAT';
+    info.innerHTML=`<div class="meta"><b>${t.genre}</b> · ${fmtTime(t.duration)} · <b>${bpm}</b></div>`+
+      `<span class="add">✦ CLICK TO ADD TO CRATE ${side==='a'?'1':'2'}</span>`;
+    info.classList.add('show');
+    info.querySelector('.add').onclick=()=>{if(active[side])decks[side].load(active[side]);};
+  }
+  function tick(){
+    const n=catalog.length; if(!n||!items.length)return;
+    if(!dragging) scroll += dir*AUTO;
+    scroll=((scroll%n)+n)%n;
+    const R=orbit.clientHeight*0.42;
+    for(let i=0;i<n;i++){
+      const d=wrap(i-scroll,n), ang=d*STEP, el=items[i];
+      if(Math.abs(ang)>1.45){el.style.opacity=0;el.style.display='none';continue;}
+      el.style.display='';
+      const y=Math.sin(ang)*R, depth=Math.cos(ang), scale=0.4+0.62*depth;
+      const near=Math.min(1,Math.max(0,(Math.abs(d)-0.34)/0.4)); /* fade where swarm takes over */
+      const op=near*Math.max(0,(depth-0.05)/0.95);
+      el.style.transform=`translateY(calc(-50% + ${y.toFixed(1)}px)) scale(${scale.toFixed(3)})`;
+      el.style.opacity=op.toFixed(3);
+    }
+    const ci=Math.round(scroll)%n;
+    if(ci!==centerIdx){centerIdx=ci; active[side]=catalog[ci];
+      ptext[side].show(catalog[ci].name); updateInfo();}
+  }
+  orbit.addEventListener('pointerdown',e=>{
+    if(e.target.closest('.rarrow'))return;
+    dragging=true;lastY=e.clientY;moved=0;
+    try{orbit.setPointerCapture(e.pointerId);}catch(_){}});
+  orbit.addEventListener('pointermove',e=>{
+    if(!dragging)return;const dy=e.clientY-lastY;lastY=e.clientY;
+    moved+=Math.abs(dy);scroll-=dy/58;});
+  orbit.addEventListener('pointerup',()=>{
+    if(dragging&&moved<6&&active[side])decks[side].load(active[side]);
+    dragging=false;});
+  orbit.addEventListener('pointercancel',()=>dragging=false);
+  return {tick,step:d=>{scroll+=d;}};
+}
+const reels={a:makeReel('a'), b:makeReel('b')};
+document.querySelectorAll('.rarrow').forEach(btn=>{
+  btn.addEventListener('click',e=>{e.stopPropagation();
+    reels[btn.dataset.side].step(btn.classList.contains('up')?-1:1);});
+});
+/* recompute the swarm layout after any resize / orientation change */
+let _rsz=null;
+addEventListener('resize',()=>{clearTimeout(_rsz);_rsz=setTimeout(()=>{
+  ['a','b'].forEach(s=>{if(active[s])ptext[s].show(active[s].name);});},160);});
+
+/* ═══ mixer track picker — expands upward with the whole catalog ═══ */
+const pickerUpdate={a:()=>{},b:()=>{}};
+['a','b'].forEach(side=>{
+  const S=side.toUpperCase();
+  const btn=$('tpickBtn'+S), list=$('tlist'+S), cur=btn.querySelector('.cur');
+  function rebuild(){
+    list.innerHTML='';
+    catalog.forEach(t=>{
+      const d=document.createElement('div');
+      d.className='titem';
+      d.innerHTML=`<span>${t.name.replace(/</g,'&lt;')}</span><span class="b">${t.bpm?Math.round(t.bpm):''}</span>`;
+      d.addEventListener('click',ev=>{ev.stopPropagation();decks[side].load(t);list.classList.remove('open');});
+      list.appendChild(d);
+    });
+  }
+  _catalogCbs.push(rebuild);
+  function mark(){const t=decks[side].track;
+    [...list.children].forEach((d,i)=>d.classList.toggle('on',t&&catalog[i]===t));}
+  btn.addEventListener('click',e=>{e.stopPropagation();list.classList.toggle('open');mark();});
+  document.addEventListener('click',e=>{if(!$('tpick'+S).contains(e.target))list.classList.remove('open');});
+  pickerUpdate[side]=()=>{cur.textContent=decks[side].track?decks[side].track.name:'select a track';mark();};
+});
+
+/* ═════════════════════ deck UI ═════════════════════ */
+const ui={
+  onLoad(d){
+    const S=d.key.toUpperCase(), t=d.track;
+    const nm=$('name'+S);nm.textContent=t.name;nm.classList.remove('empty');
+    $('play'+S).disabled=false;
+    $('back'+S).disabled=false;
+    $('pitchSl'+S).value=0;
+    $('pitch'+S).textContent='+0.0%';
+    if(typeof pickerUpdate!=='undefined')pickerUpdate[d.key]();
+    this.refreshBpm(d);
+    this.refreshSyncButtons();
+    document.querySelectorAll(`#deck${S} .lbtn`).forEach(b=>b.classList.remove('on'));
+    $('wave'+S).querySelector('.empty-note').style.display='none';
+    drawWave(d);
+  },
+  refreshBpm(d){
+    const S=d.key.toUpperCase(), t=d.track;
+    if(!t){$('bpm'+S).textContent='—';return;}
+    if(t.bpm){
+      $('bpm'+S).textContent=(t.bpm*d.el.playbackRate).toFixed(1);
+      $('bpmNote'+S).innerHTML=d.synced?'BPM · <b style="color:var(--moss)">SYNCED</b>'
+        :(d.el.playbackRate!==1?'BPM · RETUNED':'BPM · DETECTED');
+    }else{
+      $('bpm'+S).textContent='—';
+      $('bpmNote'+S).innerHTML='<span class="warn">NO STABLE BEAT FOUND</span>';
+    }
+  },
+  refreshSyncButtons(){
+    const both=decks.a.track&&decks.b.track;
+    $('syncA').disabled=!(both&&decks.a.track.bpm&&decks.b.track.bpm);
+    $('syncB').disabled=$('syncA').disabled;
+  },
+  onSync(d){
+    this.refreshBpm(d);
+    const S=d.key.toUpperCase();
+    /* reflect the synced rate on the pitch fader */
+    const pct=(d.el.playbackRate-1)*100;
+    $('pitchSl'+S).value=pct;
+    $('pitch'+S).textContent=(pct>=0?'+':'')+pct.toFixed(1)+'%';
+    const btn=$('sync'+S);
+    btn.classList.add('on');btn.textContent='SYNCED';
+    setTimeout(()=>{btn.classList.remove('on');btn.textContent='SYNC';},2600);
+  },
+  onLoop(d){
+    const S=d.key.toUpperCase();
+    document.querySelectorAll(`#deck${S} .lbtn`).forEach(b=>{
+      b.classList.toggle('on',+b.dataset.loop===d.loopBeats);});
+    drawWave(d);
+  }
+};
+
+['a','b'].forEach(k=>{
+  const S=k.toUpperCase(), d=decks[k];
+  $('play'+S).addEventListener('click',()=>{
+    if(d.playing){d.pause();}else{d.play();}
+  });
+  $('back'+S).addEventListener('click',()=>d.seek(0));
+  d.el.addEventListener('play',()=>{$('play'+S).classList.add('on');$('play'+S).textContent='❚❚ PAUSE';applyXfade();});
+  d.el.addEventListener('pause',()=>{$('play'+S).classList.remove('on');$('play'+S).textContent='▶ PLAY';});
+  d.el.addEventListener('ended',()=>{$('play'+S).classList.remove('on');$('play'+S).textContent='▶ PLAY';});
+  $('sync'+S).addEventListener('click',()=>{d.sync(decks[k==='a'?'b':'a']);});
+  /* wave seek */
+  const wave=$('wave'+S);
+  let seeking=false;
+  const seekTo=e=>{
+    if(!d.track)return;
+    const r=wave.getBoundingClientRect();
+    const x=((e.touches?e.touches[0].clientX:e.clientX)-r.left)/r.width;
+    d.seek(x*d.track.duration);
+  };
+  wave.addEventListener('pointerdown',e=>{seeking=true;seekTo(e);});
+  addEventListener('pointermove',e=>{if(seeking)seekTo(e);});
+  addEventListener('pointerup',()=>seeking=false);
+});
+document.querySelectorAll('.lbtn').forEach(b=>{
+  b.addEventListener('click',()=>decks[b.dataset.deck].setLoop(+b.dataset.loop));
+});
+/* pitch fader: ±8% in fine steps, like a real tempo fader */
+function setPitch(k,pct){
+  const d=decks[k]; if(!d.track)return;
+  pct=Math.max(-8,Math.min(8,Math.round(pct*10)/10));
+  d.synced=false;                    /* manual pitch releases sync */
+  d.setRate(1+pct/100);
+  const S=k.toUpperCase();
+  $('pitchSl'+S).value=pct;
+  $('pitch'+S).textContent=(pct>=0?'+':'')+pct.toFixed(1)+'%';
+  ui.refreshBpm(d);
+}
+document.querySelectorAll('.pbtn').forEach(b=>{
+  b.addEventListener('click',()=>{
+    const k=b.dataset.deck;
+    setPitch(k, parseFloat($('pitchSl'+k.toUpperCase()).value)+parseFloat(b.dataset.step));
+  });
+});
+document.querySelectorAll('.pslider').forEach(sl=>{
+  sl.addEventListener('input',()=>setPitch(sl.dataset.deck, parseFloat(sl.value)));
+});
+
+/* ═════════════════ waveform drawing + rAF loop ═════════════════ */
+function drawWave(d){
+  const S=d.key.toUpperCase();
+  const cv=$('wave'+S).querySelector('canvas');
+  const w=cv.clientWidth,h=cv.clientHeight,dpr=Math.min(devicePixelRatio||1,2);
+  cv.width=w*dpr;cv.height=h*dpr;
+  const g=cv.getContext('2d');g.setTransform(dpr,0,0,dpr,0,0);
+  g.clearRect(0,0,w,h);
+  const t=d.track;if(!t)return;
+  /* loop region */
+  if(d.loopBeats&&t.bpm){
+    const bd=60/t.bpm,x0=d.loopStart/t.duration*w,x1=(d.loopStart+d.loopBeats*bd)/t.duration*w;
+    g.fillStyle='rgba(201,85,46,.25)';g.fillRect(x0,0,x1-x0,h);
+  }
+  const n=t.peaks.length,played=d.el.currentTime/t.duration*n;
+  for(let i=0;i<n;i++){
+    const x=i/n*w,ph=Math.max(2,t.peaks[i]*h*0.92);
+    g.fillStyle=i<played?'#f3c969':'rgba(224,159,62,.32)';
+    g.fillRect(x,(h-ph)/2,Math.max(1,w/n-0.6),ph);
+  }
+  /* playhead */
+  const px=d.el.currentTime/t.duration*w;
+  g.fillStyle='#f0e7d8';g.fillRect(px-0.75,0,1.5,h);
+}
+function raf(ts){
+  const t=(ts||0)*0.001;
+  ['a','b'].forEach(k=>{
+    const d=decks[k],S=k.toUpperCase();
+    d.tickLoop();
+    if(d.track){$('time'+S).textContent=fmtTime(d.el.currentTime)+' / '+fmtTime(d.track.duration);drawWave(d);}
+    const lv=d.playing?d.level():0;
+    $('vu'+S).style.height=(lv*130)+'%';
+    /* spin the roulette + draw its centred swarm */
+    if(typeof reels!=='undefined'&&reels[k])reels[k].tick();
+    if(typeof ptext!=='undefined'&&ptext[k])ptext[k].update();
+  });
+  requestAnimationFrame(raf);
+}
+requestAnimationFrame(raf);
+
+/* ═══════ video background — foggy everywhere, sharp near the cursor ═══════ */
+(function(){
+  const fog=$('vFog'), foc=$('vFocus');
+  const tryPlay=()=>{if(fog.paused)fog.play().catch(()=>{});if(foc.paused)foc.play().catch(()=>{});};
+  tryPlay();
+  ['pointerdown','pointermove','touchstart','keydown','scroll'].forEach(ev=>
+    addEventListener(ev,tryPlay,{passive:true}));
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden)tryPlay();});
+  /* keep the two layers in step */
+  setInterval(()=>{if(Math.abs(fog.currentTime-foc.currentTime)>0.08)foc.currentTime=fog.currentTime;},4000);
+  let tx=-999,ty=-999,cx=-999,cy=-999;
+  addEventListener('pointermove',e=>{tx=e.clientX;ty=e.clientY;});
+  (function loop(){
+    cx+=(tx-cx)*.14; cy+=(ty-cy)*.14;
+    foc.style.setProperty('--fx',cx.toFixed(1)+'px');
+    foc.style.setProperty('--fy',cy.toFixed(1)+'px');
+    requestAnimationFrame(loop);
+  })();
+})();
+
+/* (the three.js blob lives on the Music page now) */
+
+
+/* testing hook: allow loading a File object programmatically */
+window.BLENDER.addFiles=addFiles;
+window.BLENDER.detectBeats=detectBeats;
+window.BLENDER.crates=crates;
+
+/* ═══════ the artist's catalogue — everything in tracks/ (one shared
+   library both crates draw from). Drop MP3s in tracks/ and reload. ═══════ */
+(async function autoload(){
+  if(location.protocol==='file:'){toast('Serve over http:// so the catalogue can load.');return;}
+  const AUDIO=/\.(mp3|wav|m4a|aac|ogg|flac|aif|aiff)$/i;
+  let files=[];
+  try{
+    try{const mf=await fetch('tracks/manifest.json'); if(mf.ok)files=await mf.json();}catch(e){}
+    if(!files.length){
+      const res=await fetch('tracks/');
+      if(res.ok){
+        const doc=new DOMParser().parseFromString(await res.text(),'text/html');
+        files=[...doc.querySelectorAll('a')]
+          .map(a=>a.getAttribute('href')).filter(h=>h&&AUDIO.test(h));
+      }
+    }
+  }catch(e){}
+  for(const href of files){
+    try{
+      const fn=decodeURIComponent(href.split('/').pop());
+      const r=await fetch('tracks/'+encodeURIComponent(fn));
+      if(!r.ok)continue;
+      const blob=await r.blob();
+      await addFiles(null,[new File([blob],fn,{type:blob.type||'audio/mpeg'})]);
+    }catch(e){}
+  }
+  /* defaults: first track → crate 1, last track → crate 2 */
+  if(catalog.length){
+    decks.a.load(catalog[0]);
+    decks.b.load(catalog[catalog.length-1]);
+    toast(catalog.length+' tracks loaded · sync ready');
+  }
+})();
+</script>
+</body>
+</html>

@@ -36,7 +36,9 @@
     background:linear-gradient(180deg,rgba(12,8,4,.66),rgba(12,8,4,.34) 30%,rgba(12,8,4,.5) 70%,rgba(12,8,4,.88));}
   header,main,footer{position:relative;z-index:2}
 
-  header{display:flex;justify-content:center;align-items:center;position:relative;padding:24px 42px 16px}
+  header{display:flex;justify-content:center;align-items:center;position:sticky;top:0;z-index:20;
+    padding:20px 42px 22px;
+    background:linear-gradient(180deg,rgba(14,9,5,.92) 40%,rgba(14,9,5,.6) 72%,rgba(14,9,5,0))}
   .brand{position:absolute;left:42px;top:50%;transform:translateY(-50%);cursor:pointer;transition:transform .3s}
   .brand:hover{transform:translateY(-50%) scale(1.08)}
   .brand img{height:30px;opacity:.95}

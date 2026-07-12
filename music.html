@@ -114,21 +114,21 @@
 /* ═══ new releases — each one paints the blob and swaps the backdrop ═══ */
 const RELEASES=[
   {title:'HerPulse',   file:'tracks/HerPulse1.mp3',  tag:'Single · Afro House',
-    tone:{main:0xd4487a, emis:0x5a1030, l1:0xffd0e0, l2:0xc23a6a}},
+    tone:{main:0xf3c969, emis:0x5a4410, l1:0xfff6d8, l2:0xe0a83a}},   /* golden yellow */
   {title:'Moonlit',    file:'tracks/Moonlit.mp3',    tag:'Single · Deep',
-    tone:{main:0x6f8fd6, emis:0x101a3a, l1:0xdfe8ff, l2:0x3a5ec2}},
+    tone:{main:0xcdb896, emis:0x4a3d24, l1:0xf3ead2, l2:0xb39a6a}},   /* beige / sand */
   {title:'Sands',      file:'tracks/Sands.mp3',      tag:'Single · Desert House',
-    tone:{main:0xc9a233, emis:0x4a3a08, l1:0xfff3cf, l2:0xe09f3e}},
+    tone:{main:0xe09f3e, emis:0x5a3808, l1:0xffe6b0, l2:0xc9772a}},   /* ochre / amber */
   {title:'Ocean',      file:'tracks/Ocean.mp3',      tag:'Single · Organic',
-    tone:{main:0x3fb59a, emis:0x073028, l1:0xd6fff2, l2:0x1f9a80}},
+    tone:{main:0xe9dfc0, emis:0x585028, l1:0xfbf6e4, l2:0xc9b98a}},   /* cream */
   {title:'Ngiyavuma',  file:'tracks/Ngiyavuma.mp3',  tag:'Single · Amapiano',
-    tone:{main:0xc9552e, emis:0x3a1206, l1:0xffd9c0, l2:0xe0673a}},
+    tone:{main:0xc9552e, emis:0x3a1206, l1:0xffcaa8, l2:0xe0673a}},   /* clay / terracotta */
   {title:'NightTemple',file:'tracks/NightTemple2.mp3',tag:'Single · Ritual',
-    tone:{main:0x8a5cd6, emis:0x220a3a, l1:0xe8d6ff, l2:0x6a3ac2}},
+    tone:{main:0xb5772a, emis:0x3a2408, l1:0xf0cf88, l2:0x9a5e1c}},   /* deep bronze */
 ];
 
-/* ═══ backdrops — a different video per step, home-fog styled ═══ */
-const BGS=['media/bg.mp4','media/bgB.mp4','media/bgC.mp4','media/bgD.mp4'];
+/* ═══ backdrops — the home clip, then the three tour/bkg videos ═══ */
+const BGS=['media/bg.mp4','media/bkgb.mp4','media/bkgc.mp4','media/bkgd.mp4'];
 const slots=[document.getElementById('slot0'),document.getElementById('slot1')];
 let front=0, curBg=-1;
 const allVids=()=>[...document.querySelectorAll('#bg video')];

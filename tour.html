@@ -19,11 +19,21 @@
   .mono{font-family:'IBM Plex Mono',monospace}
 
   /* half-speed video backdrop */
+  /* fog backdrop — same idea as the home page, a touch lighter by default;
+     it sharpens inside a soft circle that follows the cursor. */
   #bg{position:fixed;inset:0;z-index:0;overflow:hidden;background:#0d0906}
-  #bg video{position:absolute;left:50%;top:50%;width:104%;height:104%;
-    transform:translate(-50%,-50%);object-fit:cover;filter:brightness(.5) saturate(1.1) contrast(1.02)}
+  #bg video{position:absolute;left:50%;top:50%;width:106%;height:106%;
+    transform:translate(-50%,-50%);object-fit:cover}
+  #vFog{filter:blur(26px) brightness(.5) saturate(1.15)}
+  #vFocus{
+    filter:blur(9px) brightness(.66) saturate(1.2);
+    -webkit-mask-image:radial-gradient(circle var(--fr,300px) at var(--fx,-999px) var(--fy,-999px),
+      rgba(0,0,0,.95) 0%, rgba(0,0,0,.5) 48%, transparent 74%);
+    mask-image:radial-gradient(circle var(--fr,300px) at var(--fx,-999px) var(--fy,-999px),
+      rgba(0,0,0,.95) 0%, rgba(0,0,0,.5) 48%, transparent 74%);
+  }
   #bg::after{content:"";position:absolute;inset:0;
-    background:linear-gradient(180deg,rgba(12,8,4,.72),rgba(12,8,4,.4) 30%,rgba(12,8,4,.55) 70%,rgba(12,8,4,.9));}
+    background:linear-gradient(180deg,rgba(12,8,4,.66),rgba(12,8,4,.34) 30%,rgba(12,8,4,.5) 70%,rgba(12,8,4,.88));}
   header,main,footer{position:relative;z-index:2}
 
   header{display:flex;justify-content:center;align-items:center;position:relative;padding:24px 42px 16px}
@@ -77,7 +87,10 @@
 </head>
 <body>
 
-<div id="bg"><video src="media/tour.mp4" muted loop playsinline autoplay></video></div>
+<div id="bg">
+  <video id="vFog"   src="media/tour.mp4" muted loop playsinline autoplay></video>
+  <video id="vFocus" src="media/tour.mp4" muted loop playsinline autoplay></video>
+</div>
 
 <header>
   <div class="brand"><img src="media/logo.png" alt="MiKS logo"><b>MiKS</b></div>
@@ -103,14 +116,24 @@
 <footer><span class="m">© MiKS · all blends live · all rights reserved</span></footer>
 
 <script>
-  /* half-speed loop */
-  const v=document.querySelector('#bg video');
-  const half=()=>{v.playbackRate=0.5;};
-  v.addEventListener('loadedmetadata',half);
-  v.addEventListener('play',half);
-  const kick=()=>{v.playbackRate=0.5;v.play().catch(()=>{});};
+  /* half-speed loop across both fog layers */
+  const fog=document.getElementById('vFog'), foc=document.getElementById('vFocus');
+  const layers=[fog,foc];
+  const kick=()=>layers.forEach(v=>{v.playbackRate=0.5;if(v.paused)v.play().catch(()=>{});});
+  layers.forEach(v=>{v.addEventListener('loadedmetadata',()=>v.playbackRate=0.5);
+    v.addEventListener('play',()=>v.playbackRate=0.5);});
   kick();
-  ['pointerdown','touchstart','keydown','scroll'].forEach(e=>addEventListener(e,kick,{passive:true,once:true}));
+  ['pointerdown','pointermove','touchstart','keydown','scroll'].forEach(e=>addEventListener(e,kick,{passive:true}));
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden)kick();});
+  setInterval(()=>{if(Math.abs(fog.currentTime-foc.currentTime)>0.1)foc.currentTime=fog.currentTime;},4000);
+
+  /* the focus circle follows the cursor */
+  let tx=-999,ty=-999,cx=-999,cy=-999;
+  addEventListener('pointermove',e=>{tx=e.clientX;ty=e.clientY;});
+  (function loop(){cx+=(tx-cx)*.14;cy+=(ty-cy)*.14;
+    foc.style.setProperty('--fx',cx.toFixed(1)+'px');
+    foc.style.setProperty('--fy',cy.toFixed(1)+'px');
+    requestAnimationFrame(loop);})();
 
   /* tour dates — edit freely */
   const DATES=[

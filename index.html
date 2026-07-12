@@ -74,8 +74,9 @@
     position:absolute;left:42px;top:50%;transform:translateY(-50%);
     display:flex;align-items:center;gap:11px;
   }
-  .brand img{height:23px;width:auto;opacity:.95}
-  .brand b{font-weight:600;letter-spacing:.32em;font-size:29px;color:var(--gold)}
+  .brand{cursor:pointer;transition:opacity .3s,transform .3s}
+  .brand:hover{opacity:1;transform:translateY(-50%) scale(1.08)}
+  .brand img{height:30px;width:auto;opacity:.95}
   nav{display:flex;gap:30px}
   nav a{color:var(--mist);text-decoration:none;font-family:'IBM Plex Mono';
     font-size:10px;letter-spacing:.26em;transition:color .3s}
@@ -199,11 +200,14 @@
   .titem span.b{color:var(--mist);font-size:8.5px}
   .titem:hover{background:rgba(224,159,62,.14);color:var(--gold)}
   .titem.on{color:var(--gold)}
+  .tname-row{display:flex;align-items:baseline;gap:12px}
   .tname{
+    flex:1;min-width:0;
     font-weight:300;font-size:15px;letter-spacing:.01em;min-height:22px;
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--bone);
   }
   .tname.empty{color:var(--mist);font-size:12.5px}
+  .tdur{flex:none;white-space:nowrap}
   .bpm-row{display:flex;align-items:center;gap:10px}
   .bpm{
     font-family:'IBM Plex Mono';font-size:26px;font-weight:600;color:var(--gold);
@@ -355,15 +359,31 @@
   @media (max-width:900px) and (orientation:portrait){
     #rotate{display:flex}
   }
-  /* landscape phone: spheres up top, scroll to the mixer */
+  /* landscape phone: mixer on top, selected-track swarms below it —
+     the roulette circles are dropped, only the swarm name remains. */
   @media (max-height:560px) and (orientation:landscape){
     header{padding:10px 16px 6px}
     .hero{padding:0.6vh 12px 0.8vh}
     .tag{font-size:16px}
-    .stage{grid-template-columns:1fr 1fr;grid-template-areas:"a b" "m m";gap:10px;padding:10px 12px 18px}
-    .orbit{width:min(150px,26vw)}
-    .reel-arrows{display:block}
+    /* mixer full-width on top, the two selected-track swarms in a row below */
+    .stage{display:flex;flex-wrap:wrap;gap:8px 14px;padding:8px 12px 14px}
+    .mixer{order:1;flex:0 0 100%;width:100%;max-width:none;margin:0}
+    #crateA{order:2} #crateB{order:3}
+    .crate{flex:1 1 44%;min-width:0}
+    .orbit .ring,.orbit .reel,.reel-arrows,.reel-info{display:none}
+    .orbit{width:100%;max-width:none;aspect-ratio:auto;height:15vh;min-height:78px;cursor:default}
+    .ptext{width:100%;height:100%;left:0;top:0;transform:none}
     .after-band{height:1vh}
+  }
+  /* narrow portrait fallback (rotate gate covers real phones) */
+  @media (max-width:700px){
+    .stage{display:flex;flex-wrap:wrap}
+    .mixer{order:1;flex:0 0 100%;width:100%;max-width:none;margin:0}
+    #crateA{order:2} #crateB{order:3}
+    .crate{flex:1 1 44%;min-width:0}
+    .orbit .ring,.orbit .reel,.reel-arrows,.reel-info{display:none}
+    .orbit{width:100%;max-width:none;aspect-ratio:auto;height:14vh;min-height:72px;cursor:default}
+    .ptext{width:100%;height:100%;left:0;top:0;transform:none}
   }
 </style>
 </head>
@@ -391,7 +411,7 @@
 </div>
 
 <header>
-  <div class="brand"><img src="media/logo.png" alt="MiKS logo"><b>MiKS</b></div>
+  <a class="brand" href="index.html" aria-label="MiKS home"><img src="media/logo.png" alt="MiKS"></a>
   <nav>
     <a href="index.html" class="on">HOME</a>
     <a href="music.html">MUSIC</a>
@@ -439,7 +459,10 @@
             <div class="tpick-list" id="tlistA"></div>
           </div>
         </div>
-        <div class="tname empty" id="nameA">load a track from the left sphere</div>
+        <div class="tname-row">
+          <div class="tname empty" id="nameA">load a track from the left crate</div>
+          <span class="dk tdur" id="timeA">0:00</span>
+        </div>
         <div class="bpm-row">
           <div class="bpm"><span id="bpmA">—</span><small id="bpmNoteA">BPM</small></div>
           <div class="pitch">
@@ -448,7 +471,6 @@
             <button class="pbtn" data-deck="a" data-step="0.5">+</button>
             <span class="pval" id="pitchA">+0.0%</span>
           </div>
-          <span class="dk" id="timeA" style="margin-left:auto">0:00</span>
         </div>
         <div class="wave" id="waveA"><canvas></canvas><div class="empty-note">NO TRACK</div></div>
         <div class="transport">
@@ -478,7 +500,6 @@
           <span class="label">BLEND</span>
           <div class="xf-row"><b>A</b><input type="range" id="xfade" min="0" max="1000" value="500"><b>B</b></div>
         </div>
-        <div class="note">SYNC MATCHES TEMPO &<br>PHASE-LOCKS BEAT GRIDS<br>· VINYL MODE · ORIGINAL AUDIO ·</div>
       </div>
 
       <div class="deck" id="deckB">
@@ -489,7 +510,10 @@
             <div class="tpick-list" id="tlistB"></div>
           </div>
         </div>
-        <div class="tname empty" id="nameB">load a track from the right sphere</div>
+        <div class="tname-row">
+          <div class="tname empty" id="nameB">load a track from the right crate</div>
+          <span class="dk tdur" id="timeB">0:00</span>
+        </div>
         <div class="bpm-row">
           <div class="bpm"><span id="bpmB">—</span><small id="bpmNoteB">BPM</small></div>
           <div class="pitch">
@@ -498,7 +522,6 @@
             <button class="pbtn" data-deck="b" data-step="0.5">+</button>
             <span class="pval" id="pitchB">+0.0%</span>
           </div>
-          <span class="dk" id="timeB" style="margin-left:auto">0:00</span>
         </div>
         <div class="wave" id="waveB"><canvas></canvas><div class="empty-note">NO TRACK</div></div>
         <div class="transport">
@@ -857,8 +880,7 @@ addEventListener('pointermove',e=>{pointer.x=e.clientX;pointer.y=e.clientY;});
 
 function makePtext(side){
   const S=side.toUpperCase(), orbit=$('orbit'+S);
-  const cv=document.createElement('canvas');
-  cv.className='ptext'; orbit.appendChild(cv);
+  const cv=$('pt'+S);            /* the canvas already in the markup */
   const ctx=cv.getContext('2d');
   const N=2600;
   const px=new Float32Array(N),py=new Float32Array(N),
@@ -872,15 +894,18 @@ function makePtext(side){
   const DPR=Math.min(devicePixelRatio||1,2);
   const off=document.createElement('canvas');
   const octx=off.getContext('2d',{willReadFrequently:true});
+  let curPts=null, curWord=null;
   function resize(){
     const r=cv.getBoundingClientRect();
+    if(r.width<2||r.height<2)return;     /* not laid out yet — try again later */
     W=r.width; H=r.height;
-    cv.width=W*DPR; cv.height=H*DPR;
+    cv.width=Math.round(W*DPR); cv.height=Math.round(H*DPR);
     ctx.setTransform(DPR,0,0,DPR,0,0);
+    layout();
   }
-  resize(); addEventListener('resize',resize);
-  function show(word){
-    resize();
+  addEventListener('resize',resize);
+  /* sample a word into normalized points */
+  function measure(word){
     const ow=1000, oh=280;
     off.width=ow; off.height=oh;
     octx.clearRect(0,0,ow,oh);
@@ -890,36 +915,51 @@ function makePtext(side){
     if(mw>ow*.94){fs*=ow*.94/mw; octx.font=`600 ${fs}px Sora,sans-serif`;}
     octx.textAlign='center'; octx.textBaseline='middle';
     octx.fillText(word,ow/2,oh/2);
-    const data=octx.getImageData(0,0,ow,oh).data;
-    const pts=[];
+    const data=octx.getImageData(0,0,ow,oh).data, pts=[];
     for(let y=0;y<oh;y+=3)for(let x=0;x<ow;x+=3)
       if(data[(y*ow+x)*4+3]>128)pts.push([x/ow,y/oh]);
-    if(!pts.length)return;
-    const asp=ow/oh;
-    /* ~30% smaller than before: size to the wheel, not the viewport */
-    const orbW=orbit.clientWidth;
+    return pts.length?pts:null;
+  }
+  /* position the current word's points for the current canvas size */
+  function layout(){
+    if(!curPts||!W||!H)return;
+    const asp=1000/280;
+    const orbW=orbit.clientWidth||W;
     let dw=Math.min(orbW*1.02, W*0.9), dh=dw/asp;
     if(dh>H*.94){dh=H*.94; dw=dh*asp;}
-    /* anchor inward so the outer edge never leaves the screen:
-       crate A grows rightward, crate B grows leftward */
+    /* anchor inward so the outer edge never leaves the screen */
     let ox = side==='a' ? (W/2 - orbW*0.5) : (W/2 + orbW*0.5 - dw);
     const rect=cv.getBoundingClientRect(), pad=12;
     ox=Math.min(ox, innerWidth-pad-rect.left-dw);
     ox=Math.max(ox, pad-rect.left);
-    ox=Math.max(4, Math.min(ox, W-dw-4));   /* never off the canvas itself */
+    ox=Math.max(4, Math.min(ox, W-dw-4));
     const oy=(H-dh)/2;
-    live=Math.min(pts.length,N);
-    const fresh=alpha<0.05;
+    live=Math.min(curPts.length,N);
     for(let i=0;i<live;i++){
-      const p=pts[(i*7919)%pts.length];
+      const p=curPts[(i*7919)%curPts.length];
       tx[i]=ox+p[0]*dw; ty[i]=oy+p[1]*dh;
-      if(fresh){                 /* conjured out of the wheel's heart */
-        px[i]=W/2+(Math.random()-.5)*60;
-        py[i]=H/2+(Math.random()-.5)*40;
-        vx[i]=vy[i]=0;
-      }                          /* else: morph from the previous name */
     }
+  }
+  function show(word){
+    const pts=measure(word);
+    if(pts){curPts=pts; curWord=word;}
+    ensureSize();
+    const fresh=alpha<0.05;
+    layout();
+    if(fresh){                   /* conjured out of the wheel's heart */
+      for(let i=0;i<live;i++){
+        px[i]=W/2+(Math.random()-.5)*60;
+        py[i]=H/2+(Math.random()-.5)*40; vx[i]=vy[i]=0;
+      }
+    }                            /* else: morph from the previous name */
     alphaT=1;
+  }
+  /* keep the backing store matched to the displayed size (fixes layout races) */
+  function ensureSize(){
+    const cw=cv.clientWidth, ch=cv.clientHeight;
+    if(cw>1&&ch>1&&(Math.abs(cv.width-Math.round(cw*DPR))>2||Math.abs(cv.height-Math.round(ch*DPR))>2)){
+      resize();
+    }else if(!W||!H){resize();}
   }
   function hide(){
     if(alphaT===0)return;
@@ -931,6 +971,7 @@ function makePtext(side){
   }
   const t0=Math.random()*100;
   function update(){
+    ensureSize();                /* self-correct if the canvas display size changed */
     alpha+=(alphaT-alpha)*0.06;
     if(alpha<0.012&&alphaT===0){if(W)ctx.clearRect(0,0,W,H);return;}
     const r=cv.getBoundingClientRect();
@@ -961,6 +1002,9 @@ function makePtext(side){
 }
 const ptext={a:makePtext('a'), b:makePtext('b')};
 const active={a:null,b:null};      /* the track currently centred in each reel */
+/* on mobile the roulette is hidden; the swarm shows the LOADED deck track */
+const mobileMQ=matchMedia('(max-width:700px), (max-height:560px) and (orientation:landscape)');
+const isMobile=()=>mobileMQ.matches;
 
 /* ═══ track roulette — a vertical wheel of names per crate ═══════
    Auto-rotates (crate 1 down, crate 2 up). The centred name is drawn
@@ -1010,7 +1054,8 @@ function makeReel(side){
     }
     const ci=Math.round(scroll)%n;
     if(ci!==centerIdx){centerIdx=ci; active[side]=catalog[ci];
-      ptext[side].show(catalog[ci].name); updateInfo();}
+      if(!isMobile()) ptext[side].show(catalog[ci].name);  /* mobile swarm follows the loaded track instead */
+      updateInfo();}
   }
   orbit.addEventListener('pointerdown',e=>{
     if(e.target.closest('.rarrow'))return;
@@ -1033,7 +1078,10 @@ document.querySelectorAll('.rarrow').forEach(btn=>{
 /* recompute the swarm layout after any resize / orientation change */
 let _rsz=null;
 addEventListener('resize',()=>{clearTimeout(_rsz);_rsz=setTimeout(()=>{
-  ['a','b'].forEach(s=>{if(active[s])ptext[s].show(active[s].name);});},160);});
+  ['a','b'].forEach(s=>{
+    const t=isMobile()?decks[s].track:active[s];
+    if(t)ptext[s].show(t.name);
+  });},160);});
 
 /* ═══ mixer track picker — expands upward with the whole catalog ═══ */
 const pickerUpdate={a:()=>{},b:()=>{}};
@@ -1068,6 +1116,7 @@ const ui={
     $('pitchSl'+S).value=0;
     $('pitch'+S).textContent='+0.0%';
     if(typeof pickerUpdate!=='undefined')pickerUpdate[d.key]();
+    if(isMobile())ptext[d.key].show(t.name);   /* mobile: swarm shows the loaded track */
     this.refreshBpm(d);
     this.refreshSyncButtons();
     document.querySelectorAll(`#deck${S} .lbtn`).forEach(b=>b.classList.remove('on'));

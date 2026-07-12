@@ -74,8 +74,8 @@
     position:absolute;left:42px;top:50%;transform:translateY(-50%);
     display:flex;align-items:center;gap:11px;
   }
-  .brand img{height:34px;width:auto;opacity:.95}
-  .brand b{font-weight:600;letter-spacing:.32em;font-size:43px;color:var(--gold)}
+  .brand img{height:23px;width:auto;opacity:.95}
+  .brand b{font-weight:600;letter-spacing:.32em;font-size:29px;color:var(--gold)}
   nav{display:flex;gap:30px}
   nav a{color:var(--mist);text-decoration:none;font-family:'IBM Plex Mono';
     font-size:10px;letter-spacing:.26em;transition:color .3s}
@@ -478,7 +478,7 @@
           <span class="label">BLEND</span>
           <div class="xf-row"><b>A</b><input type="range" id="xfade" min="0" max="1000" value="500"><b>B</b></div>
         </div>
-        <div class="note">SYNC RETUNES TEMPO &<br>PHASE-LOCKS BEAT GRIDS<br>· PITCH PRESERVED ·</div>
+        <div class="note">SYNC MATCHES TEMPO &<br>PHASE-LOCKS BEAT GRIDS<br>· VINYL MODE · ORIGINAL AUDIO ·</div>
       </div>
 
       <div class="deck" id="deckB">
@@ -573,7 +573,10 @@ function ctx(){ if(!AC){AC=new (window.AudioContext||window.webkitAudioContext)(
 class Deck{
   constructor(key){
     this.key=key; this.track=null; this.rate=1; this.loopBeats=0;
-    this.el=new Audio(); this.el.preservesPitch=true; this.el.webkitPreservesPitch=true;
+    /* vinyl mode: rate changes resample (pitch moves with tempo) — clean,
+       artifact-free audio. The browser's time-stretcher smears transients,
+       so it stays OFF. At rate 1.0 playback is untouched either way. */
+    this.el=new Audio(); this.el.preservesPitch=false; this.el.webkitPreservesPitch=false;
     this.nodes=null; this.synced=false;
   }
   ensureGraph(){
@@ -618,35 +621,37 @@ class Deck{
     const rate=target/t.bpm;
     if(rate<0.5||rate>2){toast('Tempos too far apart to sync sensibly ('+t.bpm.toFixed(1)+' → '+target.toFixed(1)+').');return false;}
     this.setRate(rate);
-    /* phase align: coarse jump if far, then platter-style micro-chase */
+    /* phase align: seek only if far off, then glide gently into lock */
     if(this.playing&&other.playing){
       const myB=this.beatPos(), otB=other.beatPos();
       let d=((otB-myB)%1+1)%1; if(d>0.5)d-=1;      /* shortest path, in beats */
-      if(Math.abs(d)>0.12) this.el.currentTime += d*(60/t.bpm);
-      this.phaseChase(other,rate);
+      if(Math.abs(d)>0.25) this.el.currentTime += d*(60/t.bpm);
+      this.phaseHold(other,rate);
     }
     this.synced=true;
     ui.onSync(this);
     return true;
   }
-  /* nudge the "platter": tiny temporary rate bends keep the grids locked
-     for as long as sync is engaged — corrections stay ≤1.5%, inaudible. */
-  phaseChase(other,baseRate){
+  /* hold the lock like a steady hand on the platter:
+     one firmer glide to land the beat (≤2%, a second or two), then only
+     whisper-corrections (≤0.5% ≈ 8 cents — inaudible) against slow drift.
+     No time-stretcher, no constant warble: just clean resampled audio. */
+  phaseHold(other,baseRate){
     clearInterval(this._chase);
     const frac=x=>((x%1)+1)%1;
+    let locked=false;
     this._chase=setInterval(()=>{
       if(!this.track||!this.synced){
-        /* sync released (e.g. manual pitch) — stop without touching the rate */
         clearInterval(this._chase);this._chase=null;return;
       }
       if(!(this.playing&&other.playing)){this.el.playbackRate=baseRate;return;}
       let d=frac(other.beatPos())-frac(this.beatPos());
       if(d>0.5)d-=1; if(d<-0.5)d+=1;
-      if(Math.abs(d)>0.2){this.el.currentTime+=d*(60/this.track.bpm);return;}
-      if(Math.abs(d)<0.004){this.el.playbackRate=baseRate;return;}
-      const bend=Math.max(-0.015,Math.min(0.015,d*1.2));
+      if(Math.abs(d)<0.006){locked=true;this.el.playbackRate=baseRate;return;}
+      const cap=locked?0.005:0.02;
+      const bend=Math.max(-cap,Math.min(cap,d*0.8));
       this.el.playbackRate=baseRate*(1+bend);
-    },140);
+    },400);
   }
   /* beat-snapped loop */
   setLoop(beats){
@@ -672,14 +677,15 @@ class Deck{
     return s/this.vuData.length/255;
   }
 }
+/* master: a transparent gain — no compression, no colouring.
+   (A compressor used to sit here; it audibly squashed the music.) */
 let _master=null;
 function master(){
   if(_master)return _master;
   const c=ctx();
-  const comp=c.createDynamicsCompressor();
-  comp.threshold.value=-8;comp.ratio.value=4;
-  comp.connect(c.destination);
-  _master=comp;return _master;
+  const g=c.createGain(); g.gain.value=1.0;
+  g.connect(c.destination);
+  _master=g;return _master;
 }
 
 const decks={a:new Deck('a'), b:new Deck('b')};

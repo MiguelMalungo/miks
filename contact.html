@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MiKS · Contact</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@200;300;400;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --coffee:#161009;--bone:#f0e7d8;--sand:#cdb896;--mist:#8f8069;
+    --gold:#f3c969;--ochre:#e09f3e;--clay:#c9552e;
+    --hair:rgba(224,159,62,.22);--hair-dim:rgba(224,159,62,.12);
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{min-height:100%}
+  body{
+    background:
+      radial-gradient(ellipse 70% 50% at 16% 18%, rgba(201,85,46,.09), transparent 62%),
+      radial-gradient(ellipse 55% 60% at 85% 80%, rgba(224,159,62,.07), transparent 62%),
+      var(--coffee);
+    color:var(--bone);font-family:'Sora',sans-serif;overflow-x:hidden;
+  }
+  #dust{position:fixed;inset:0;z-index:0;pointer-events:none}
+  header,main,footer{position:relative;z-index:2}
+
+  header{display:flex;justify-content:center;align-items:center;position:relative;padding:24px 42px 16px}
+  .brand{position:absolute;left:42px;top:50%;transform:translateY(-50%);cursor:pointer;transition:transform .3s}
+  .brand:hover{transform:translateY(-50%) scale(1.08)}
+  .brand img{height:30px;opacity:.95}
+  nav{display:flex;gap:30px}
+  nav a{color:var(--mist);text-decoration:none;font-family:'IBM Plex Mono';font-size:10px;letter-spacing:.26em;transition:color .3s}
+  nav a:hover,nav a.on{color:var(--gold)}
+
+  main{
+    min-height:calc(100vh - 150px);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    padding:4vh 24px 6vh;gap:5vh;text-align:center;
+  }
+  .kick{font-family:'IBM Plex Mono';font-size:10px;letter-spacing:.5em;color:var(--gold);text-transform:uppercase}
+
+  /* the swarm email */
+  .swarm-wrap{position:relative;width:min(1100px,94vw);height:min(26vh,220px);cursor:pointer}
+  #swarm{position:absolute;inset:0;width:100%;height:100%}
+  .swarm-sub{
+    font-family:'IBM Plex Mono';font-size:9px;letter-spacing:.4em;color:var(--mist);
+    text-transform:uppercase;margin-top:-2vh;
+  }
+
+  /* contact rows — magnetic */
+  .rows{display:flex;flex-direction:column;gap:0;width:min(560px,92vw)}
+  .crow{
+    display:flex;align-items:center;justify-content:space-between;gap:20px;
+    padding:20px 8px;border-top:1px solid var(--hair-dim);text-decoration:none;
+  }
+  .crow:last-child{border-bottom:1px solid var(--hair-dim)}
+  .crow .lb{font-family:'IBM Plex Mono';font-size:9.5px;letter-spacing:.3em;color:var(--mist);text-transform:uppercase}
+  .crow .em{
+    font-weight:300;font-size:clamp(15px,2.4vw,20px);color:var(--bone);
+    display:inline-block;will-change:transform;transition:color .3s;
+  }
+  .crow:hover .em{color:var(--gold)}
+
+  /* socials */
+  .socials{display:flex;gap:34px;flex-wrap:wrap;justify-content:center}
+  .soc{
+    font-family:'IBM Plex Mono';font-size:10px;letter-spacing:.26em;text-transform:uppercase;
+    color:var(--mist);text-decoration:none;display:inline-block;will-change:transform;
+    transition:color .3s;
+  }
+  .soc:hover{color:var(--gold)}
+
+  footer{text-align:center;padding:0 0 34px}
+  footer .m{font-family:'IBM Plex Mono';font-size:9px;letter-spacing:.28em;color:var(--mist);text-transform:uppercase}
+
+  @media (max-width:700px){
+    header{position:fixed;left:0;right:0;bottom:0;top:auto;justify-content:center;
+      padding:8px 16px;background:rgba(18,12,7,.93);backdrop-filter:blur(10px);
+      border-top:1px solid var(--hair-dim);z-index:60}
+    .brand{left:16px}
+    .brand img{height:22px}
+    nav{gap:12px;margin-left:52px}
+    nav a{font-size:8px;letter-spacing:.1em}
+    footer{display:none}
+    main{min-height:calc(100vh - 60px);padding-bottom:70px;gap:4vh}
+    .swarm-wrap{height:18vh}
+    .socials{gap:20px}
+  }
+</style>
+</head>
+<body>
+
+<canvas id="dust"></canvas>
+
+<header>
+  <a class="brand" href="index.html" aria-label="MiKS home"><img src="media/logo.png" alt="MiKS"></a>
+  <nav>
+    <a href="index.html">HOME</a>
+    <a href="music.html">MUSIC</a>
+    <a href="tour.html">TOUR</a>
+    <a href="projects.html">PROJECTS</a>
+    <a href="#" onclick="return false">SHOP</a>
+    <a href="contact.html" class="on">CONTACT</a>
+  </nav>
+</header>
+
+<main>
+  <span class="kick">Bookings · Press · Hello</span>
+
+  <div class="swarm-wrap" id="swarmWrap" title="Write to MiKS">
+    <canvas id="swarm"></canvas>
+  </div>
+  <div class="swarm-sub">run your cursor through it · click to write</div>
+
+  <div class="rows">
+    <a class="crow" href="mailto:bookings@miks.mu">
+      <span class="lb">Bookings</span><span class="em">bookings@miks.mu</span>
+    </a>
+    <a class="crow" href="mailto:press@miks.mu">
+      <span class="lb">Press</span><span class="em">press@miks.mu</span>
+    </a>
+    <a class="crow" href="mailto:hello@miks.mu">
+      <span class="lb">Everything else</span><span class="em">hello@miks.mu</span>
+    </a>
+  </div>
+
+  <div class="socials">
+    <a class="soc" href="#" onclick="return false">Instagram</a>
+    <a class="soc" href="#" onclick="return false">SoundCloud</a>
+    <a class="soc" href="#" onclick="return false">Spotify</a>
+    <a class="soc" href="#" onclick="return false">YouTube</a>
+    <a class="soc" href="#" onclick="return false">Bandcamp</a>
+  </div>
+</main>
+
+<footer><span class="m">© MiKS · all blends live · all rights reserved</span></footer>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+<script>
+/* ═══ gold ember dust — three.js (same family as the projects page) ═══ */
+(function(){
+  if(!window.THREE)return;
+  const canvas=document.getElementById('dust');
+  const renderer=new THREE.WebGLRenderer({canvas,alpha:true,antialias:false});
+  renderer.setPixelRatio(Math.min(devicePixelRatio||1,2));
+  const scene=new THREE.Scene();
+  const cam=new THREE.PerspectiveCamera(55,1,.1,100); cam.position.z=22;
+  /* soft round ember sprite */
+  const sc=document.createElement('canvas');sc.width=sc.height=64;
+  const sg=sc.getContext('2d');
+  const grd=sg.createRadialGradient(32,32,0,32,32,32);
+  grd.addColorStop(0,'rgba(255,255,255,1)');
+  grd.addColorStop(.4,'rgba(255,255,255,.55)');
+  grd.addColorStop(1,'rgba(255,255,255,0)');
+  sg.fillStyle=grd;sg.fillRect(0,0,64,64);
+  const sprite=new THREE.CanvasTexture(sc);
+
+  const N=750;
+  const pos=new Float32Array(N*3), seed=new Float32Array(N);
+  for(let i=0;i<N;i++){
+    pos[i*3]=(Math.random()-.5)*46; pos[i*3+1]=(Math.random()-.5)*30; pos[i*3+2]=(Math.random()-.5)*18;
+    seed[i]=Math.random()*100;
+  }
+  const geo=new THREE.BufferGeometry();
+  geo.setAttribute('position',new THREE.BufferAttribute(pos,3));
+  scene.add(new THREE.Points(geo,new THREE.PointsMaterial({
+    color:0xf3c969,size:.34,map:sprite,alphaTest:.01,transparent:true,opacity:.5,
+    blending:THREE.AdditiveBlending,depthWrite:false})));
+  function resize(){renderer.setSize(innerWidth,innerHeight,false);
+    cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix();}
+  resize();addEventListener('resize',resize);
+  let mx=0,my=0;
+  addEventListener('pointermove',e=>{mx=e.clientX/innerWidth*2-1;my=e.clientY/innerHeight*2-1;});
+  (function frame(ts){
+    const t=(ts||0)*0.001;
+    const a=geo.attributes.position.array;
+    for(let i=0;i<N;i++){
+      const s=seed[i];
+      a[i*3]+=Math.sin(t*.3+s)*0.004;
+      a[i*3+1]+=0.006+Math.sin(s)*0.002;
+      if(a[i*3+1]>16)a[i*3+1]=-16;
+    }
+    geo.attributes.position.needsUpdate=true;
+    cam.position.x+=(mx*1.6-cam.position.x)*0.03;
+    cam.position.y+=(-my*1.0-cam.position.y)*0.03;
+    cam.lookAt(0,0,0);
+    renderer.render(scene,cam);
+    requestAnimationFrame(frame);
+  })();
+})();
+
+/* ═══ the email as an ink swarm — carve it, click to write ═══ */
+(function(){
+  const WORD='hello@miks.mu';
+  const wrap=document.getElementById('swarmWrap');
+  const cv=document.getElementById('swarm');
+  const ctx=cv.getContext('2d');
+  const DPR=Math.min(devicePixelRatio||1,2);
+  const N=2600;
+  const px=new Float32Array(N),py=new Float32Array(N),
+        vx=new Float32Array(N),vy=new Float32Array(N),
+        tx=new Float32Array(N),ty=new Float32Array(N),
+        ang=new Float32Array(N),ln=new Float32Array(N),sp=new Float32Array(N);
+  const gold=new Uint8Array(N);
+  for(let i=0;i<N;i++){ang[i]=Math.random()*6.28;ln[i]=2+Math.random()*3.4;
+    sp[i]=.06+Math.random()*.05;gold[i]=Math.random()<.1?1:0;}
+  let W=0,H=0,live=0;
+  const off=document.createElement('canvas');
+  const octx=off.getContext('2d',{willReadFrequently:true});
+  const pointer={x:-9999,y:-9999};
+  addEventListener('pointermove',e=>{pointer.x=e.clientX;pointer.y=e.clientY;});
+  function layout(){
+    const r=cv.getBoundingClientRect();
+    if(r.width<2)return;
+    W=r.width;H=r.height;
+    cv.width=Math.round(W*DPR);cv.height=Math.round(H*DPR);
+    ctx.setTransform(DPR,0,0,DPR,0,0);
+    const ow=1400,oh=260;
+    off.width=ow;off.height=oh;
+    octx.clearRect(0,0,ow,oh);
+    octx.fillStyle='#000';
+    let fs=150;octx.font=`600 ${fs}px Sora,sans-serif`;
+    const mw=octx.measureText(WORD).width;
+    if(mw>ow*.96){fs*=ow*.96/mw;octx.font=`600 ${fs}px Sora,sans-serif`;}
+    octx.textAlign='center';octx.textBaseline='middle';
+    octx.fillText(WORD,ow/2,oh/2);
+    const data=octx.getImageData(0,0,ow,oh).data,pts=[];
+    for(let y=0;y<oh;y+=3)for(let x=0;x<ow;x+=3)
+      if(data[(y*ow+x)*4+3]>128)pts.push([x/ow,y/oh]);
+    if(!pts.length)return;
+    const asp=ow/oh;
+    let dw=W*.98,dh=dw/asp;
+    if(dh>H*.96){dh=H*.96;dw=dh*asp;}
+    const ox=(W-dw)/2,oy=(H-dh)/2;
+    const fresh=live===0;
+    live=Math.min(pts.length,N);
+    for(let i=0;i<live;i++){
+      const p=pts[(i*7919)%pts.length];
+      tx[i]=ox+p[0]*dw; ty[i]=oy+p[1]*dh;
+      if(fresh){px[i]=W/2+(Math.random()-.5)*W*.8;py[i]=H/2+(Math.random()-.5)*H;vx[i]=vy[i]=0;}
+    }
+  }
+  layout();
+  document.fonts.load('600 150px Sora').then(()=>{live=0;layout();});
+  addEventListener('resize',()=>{const l=live;live=0;layout();if(!live)live=l;});
+  const t0=Math.random()*100;
+  (function draw(){
+    if(W){
+      const r=cv.getBoundingClientRect();
+      const mx=pointer.x-r.left,my=pointer.y-r.top;
+      ctx.clearRect(0,0,W,H);
+      const wob=performance.now()*0.00045+t0;
+      for(let pass=0;pass<2;pass++){
+        ctx.beginPath();
+        for(let i=0;i<live;i++){
+          if(gold[i]!==pass)continue;
+          vx[i]+=(tx[i]-px[i])*sp[i]; vy[i]+=(ty[i]-py[i])*sp[i];
+          const dx=px[i]-mx,dy=py[i]-my,d2=dx*dx+dy*dy;
+          if(d2<4900){const d=Math.sqrt(d2)||1,f=(1-d/70)*7;
+            vx[i]+=dx/d*f;vy[i]+=dy/d*f;}
+          vx[i]*=.82;vy[i]*=.82;
+          px[i]+=vx[i];py[i]+=vy[i];
+          const a2=ang[i]+Math.sin(wob+i*.37)*.3,l=ln[i]*.5;
+          const ca=Math.cos(a2)*l,sa=Math.sin(a2)*l;
+          ctx.moveTo(px[i]-ca,py[i]-sa);ctx.lineTo(px[i]+ca,py[i]+sa);
+        }
+        ctx.strokeStyle=pass?'rgba(243,201,105,.92)':'rgba(255,255,255,.88)';
+        ctx.lineWidth=pass?1.5:1.3;
+        ctx.stroke();
+      }
+    }
+    requestAnimationFrame(draw);
+  })();
+  wrap.addEventListener('click',()=>{location.href='mailto:hello@miks.mu';});
+})();
+
+/* ═══ GSAP: entrance + magnetic rows/socials ═══ */
+(function(){
+  if(!window.gsap)return;
+  gsap.from('main > *',{y:24,opacity:0,duration:1,stagger:.1,ease:'power3.out',delay:.15});
+  /* magnetic pull toward the cursor */
+  document.querySelectorAll('.crow .em, .soc').forEach(el=>{
+    const qx=gsap.quickTo(el,'x',{duration:.4,ease:'power3.out'});
+    const qy=gsap.quickTo(el,'y',{duration:.4,ease:'power3.out'});
+    const host=el.closest('.crow')||el;
+    host.addEventListener('pointermove',e=>{
+      const r=el.getBoundingClientRect();
+      qx((e.clientX-(r.left+r.width/2))*.18);
+      qy((e.clientY-(r.top+r.height/2))*.3);
+    });
+    host.addEventListener('pointerleave',()=>{qx(0);qy(0);});
+  });
+})();
+</script>
+</body>
+</html>

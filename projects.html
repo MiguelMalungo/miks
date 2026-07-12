@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MiKS · Projects</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@200;300;400;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --coffee:#161009;--bone:#f0e7d8;--sand:#cdb896;--mist:#8f8069;
+    --gold:#f3c969;--ochre:#e09f3e;--clay:#c9552e;
+    --hair:rgba(224,159,62,.22);--hair-dim:rgba(224,159,62,.12);
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{scroll-behavior:auto}
+  body{
+    background:
+      radial-gradient(ellipse 70% 50% at 16% 18%, rgba(201,85,46,.09), transparent 62%),
+      radial-gradient(ellipse 55% 60% at 85% 80%, rgba(224,159,62,.07), transparent 62%),
+      var(--coffee);
+    color:var(--bone);font-family:'Sora',sans-serif;overflow-x:hidden;
+  }
+  #dust{position:fixed;inset:0;z-index:0;pointer-events:none}
+  header,main,footer{position:relative;z-index:2}
+
+  header{display:flex;justify-content:center;align-items:center;position:relative;padding:24px 42px 16px}
+  .brand{position:absolute;left:42px;top:50%;transform:translateY(-50%);cursor:pointer;transition:transform .3s}
+  .brand:hover{transform:translateY(-50%) scale(1.08)}
+  .brand img{height:30px;opacity:.95}
+  nav{display:flex;gap:30px}
+  nav a{color:var(--mist);text-decoration:none;font-family:'IBM Plex Mono';font-size:10px;letter-spacing:.26em;transition:color .3s}
+  nav a:hover,nav a.on{color:var(--gold)}
+
+  /* intro */
+  .intro{min-height:62vh;display:flex;flex-direction:column;justify-content:center;
+    align-items:center;text-align:center;padding:4vh 24px 0}
+  .kick{font-family:'IBM Plex Mono';font-size:10px;letter-spacing:.5em;color:var(--gold);text-transform:uppercase}
+  .intro h1{
+    font-weight:200;font-size:clamp(52px,9vw,132px);line-height:.95;letter-spacing:-.02em;margin-top:18px;
+    background:linear-gradient(175deg,var(--bone) 30%,var(--sand) 62%,var(--ochre) 105%);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+  }
+  .intro h1 i{font-style:normal;font-weight:600}
+  .intro p{margin-top:22px;color:var(--sand);font-weight:300;font-size:15px;max-width:52ch;line-height:1.7}
+  .hint{margin-top:5vh;font-family:'IBM Plex Mono';font-size:9px;letter-spacing:.34em;
+    color:var(--mist);text-transform:uppercase;display:flex;align-items:center;gap:12px}
+  .hint .ln{width:64px;height:1px;background:linear-gradient(90deg,var(--hair),transparent)}
+
+  /* horizontal journey */
+  #hwrap{position:relative;overflow:hidden}
+  #track{display:flex;align-items:stretch;will-change:transform}
+  .panel{
+    flex:0 0 auto;width:min(760px,86vw);min-height:78vh;
+    display:flex;flex-direction:column;justify-content:center;
+    padding:6vh 7vw;position:relative;
+  }
+  .panel .num{
+    position:absolute;top:4vh;left:5vw;z-index:0;
+    font-weight:600;font-size:clamp(140px,24vh,260px);line-height:1;
+    color:transparent;-webkit-text-stroke:1px rgba(224,159,62,.28);
+    user-select:none;will-change:transform;
+  }
+  .panel .body{position:relative;z-index:1;max-width:32em}
+  .panel .tag{font-family:'IBM Plex Mono';font-size:9.5px;letter-spacing:.34em;
+    color:var(--gold);text-transform:uppercase}
+  .panel h2{font-weight:200;font-size:clamp(40px,6vw,76px);line-height:1.02;
+    letter-spacing:-.015em;margin:14px 0 18px}
+  .panel h2 b{font-weight:600}
+  .panel p{color:var(--sand);font-weight:300;font-size:14.5px;line-height:1.75;max-width:46ch}
+  .panel .foot{margin-top:26px;display:flex;gap:26px;align-items:center}
+  .panel .meta{font-family:'IBM Plex Mono';font-size:9px;letter-spacing:.22em;color:var(--mist);text-transform:uppercase}
+  .panel .rule{position:absolute;left:5vw;right:5vw;bottom:6vh;height:1px;
+    background:linear-gradient(90deg,var(--hair),transparent)}
+
+  /* progress line */
+  #prog{position:fixed;left:0;right:0;bottom:0;height:2px;z-index:40;
+    background:rgba(224,159,62,.12)}
+  #prog i{display:block;height:100%;width:100%;transform-origin:0 50%;transform:scaleX(0);
+    background:linear-gradient(90deg,var(--clay),var(--ochre),var(--gold))}
+
+  .outro{min-height:46vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:18px;padding:0 24px}
+  .outro h3{font-weight:200;font-size:clamp(26px,3.6vw,44px)}
+  .outro h3 b{font-weight:600;color:var(--gold)}
+  .outro a{
+    font-family:'IBM Plex Mono';font-size:10px;letter-spacing:.3em;text-transform:uppercase;
+    color:var(--bone);text-decoration:none;border:1px solid var(--hair);border-radius:999px;
+    padding:15px 34px;transition:all .35s;
+  }
+  .outro a:hover{border-color:var(--gold);box-shadow:0 0 26px -8px rgba(224,159,62,.5)}
+
+  footer{text-align:center;padding:26px 0 40px}
+  footer .m{font-family:'IBM Plex Mono';font-size:9px;letter-spacing:.28em;color:var(--mist);text-transform:uppercase}
+
+  @media (max-width:860px){
+    /* vertical fallback: no pinning, panels stack */
+    #track{flex-direction:column}
+    .panel{width:100%;min-height:0;padding:9vh 8vw}
+    .panel .num{position:static;font-size:80px;-webkit-text-stroke-color:rgba(224,159,62,.35);margin-bottom:6px}
+    .panel .rule{position:static;margin-top:5vh}
+    .intro{min-height:48vh}
+  }
+  @media (max-width:700px){
+    header{position:fixed;left:0;right:0;bottom:0;top:auto;justify-content:center;
+      padding:8px 16px;background:rgba(18,12,7,.93);backdrop-filter:blur(10px);
+      border-top:1px solid var(--hair-dim);z-index:60}
+    .brand{left:16px}
+    .brand img{height:22px}
+    nav{gap:12px;margin-left:52px}
+    nav a{font-size:8px;letter-spacing:.1em}
+    footer{display:none}
+    body{padding-bottom:52px}
+    #prog{bottom:44px}
+  }
+</style>
+</head>
+<body>
+
+<canvas id="dust"></canvas>
+
+<header>
+  <a class="brand" href="index.html" aria-label="MiKS home"><img src="media/logo.png" alt="MiKS"></a>
+  <nav>
+    <a href="index.html">HOME</a>
+    <a href="music.html">MUSIC</a>
+    <a href="tour.html">TOUR</a>
+    <a href="projects.html" class="on">PROJECTS</a>
+    <a href="#" onclick="return false">SHOP</a>
+    <a href="contact.html">CONTACT</a>
+  </nav>
+</header>
+
+<main>
+  <section class="intro">
+    <span class="kick">Beyond the decks</span>
+    <h1>Works &<br><i>worlds.</i></h1>
+    <p>Five ongoing projects — stages, tapes, vinyl, villages and water.
+       Each one another way of asking the same question: how far can a rhythm travel?</p>
+    <div class="hint"><span class="ln" style="transform:scaleX(-1)"></span>SCROLL TO TRAVEL<span class="ln"></span></div>
+  </section>
+
+  <section id="hwrap">
+    <div id="track">
+
+      <article class="panel">
+        <div class="num">01</div>
+        <div class="body">
+          <span class="tag">Live A/V Show</span>
+          <h2>Roots in <b>Motion</b></h2>
+          <p>A two-hour improvised blend — no setlist, no safety net. Two crates,
+             one pulse, and a light rig that listens. Every city hears a show that
+             will never exist again.</p>
+          <div class="foot"><span class="meta">TOURING · SINCE 2021</span></div>
+        </div>
+        <div class="rule"></div>
+      </article>
+
+      <article class="panel">
+        <div class="num">02</div>
+        <div class="body">
+          <span class="tag">Mix Series</span>
+          <h2>Kamba <b>Tapes</b></h2>
+          <p>A monthly hour with a friend — kamba — from somewhere on the
+             Luanda–Lisboa–Joburg triangle. Recorded in one take, released on the
+             full moon, archived forever.</p>
+          <div class="foot"><span class="meta">EP. 038 · MONTHLY</span></div>
+        </div>
+        <div class="rule"></div>
+      </article>
+
+      <article class="panel">
+        <div class="num">03</div>
+        <div class="body">
+          <span class="tag">Vinyl Imprint</span>
+          <h2>Golden <b>Hour</b></h2>
+          <p>A small label for tracks that deserve weight. 500 copies per release,
+             hand-numbered, mastered for the floor. Digital comes later — the groove
+             comes first.</p>
+          <div class="foot"><span class="meta">GH-007 · OUT NOW</span></div>
+        </div>
+        <div class="rule"></div>
+      </article>
+
+      <article class="panel">
+        <div class="num">04</div>
+        <div class="body">
+          <span class="tag">Community</span>
+          <h2>The <b>Yard</b></h2>
+          <p>Free production and DJ workshops in community spaces — decks, drum
+             machines and patience. The next generation shouldn't need permission
+             to make noise.</p>
+          <div class="foot"><span class="meta">LUANDA · LISBOA · 200+ ALUMNI</span></div>
+        </div>
+        <div class="rule"></div>
+      </article>
+
+      <article class="panel">
+        <div class="num">05</div>
+        <div class="body">
+          <span class="tag">Installation</span>
+          <h2>Water<b>line</b></h2>
+          <p>A generative sound piece driven by live tidal data from the Atlantic.
+             The ocean writes the arrangement; the room breathes with it. First shown
+             at a lighthouse, naturally.</p>
+          <div class="foot"><span class="meta">GENERATIVE · TIDAL DATA · 2024</span></div>
+        </div>
+        <div class="rule"></div>
+      </article>
+
+    </div>
+  </section>
+
+  <section class="outro">
+    <h3>Have a stage, a story,<br>or a strange idea? <b>Bring it.</b></h3>
+    <a href="contact.html">Get in touch</a>
+  </section>
+</main>
+
+<div id="prog"><i></i></div>
+
+<footer><span class="m">© MiKS · all blends live · all rights reserved</span></footer>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js"></script>
+<script>
+/* ═══ gold ember dust — three.js, drifts up, stirred by scroll ═══ */
+(function(){
+  if(!window.THREE)return;
+  const canvas=document.getElementById('dust');
+  const renderer=new THREE.WebGLRenderer({canvas,alpha:true,antialias:false});
+  renderer.setPixelRatio(Math.min(devicePixelRatio||1,2));
+  const scene=new THREE.Scene();
+  const cam=new THREE.PerspectiveCamera(55,1,.1,100); cam.position.z=22;
+  /* soft round ember sprite */
+  const sc=document.createElement('canvas');sc.width=sc.height=64;
+  const sg=sc.getContext('2d');
+  const grd=sg.createRadialGradient(32,32,0,32,32,32);
+  grd.addColorStop(0,'rgba(255,255,255,1)');
+  grd.addColorStop(.4,'rgba(255,255,255,.55)');
+  grd.addColorStop(1,'rgba(255,255,255,0)');
+  sg.fillStyle=grd;sg.fillRect(0,0,64,64);
+  const sprite=new THREE.CanvasTexture(sc);
+
+  const N=900;
+  const pos=new Float32Array(N*3), seed=new Float32Array(N);
+  for(let i=0;i<N;i++){
+    pos[i*3]= (Math.random()-.5)*46;
+    pos[i*3+1]=(Math.random()-.5)*30;
+    pos[i*3+2]=(Math.random()-.5)*18;
+    seed[i]=Math.random()*100;
+  }
+  const geo=new THREE.BufferGeometry();
+  geo.setAttribute('position',new THREE.BufferAttribute(pos,3));
+  const mat=new THREE.PointsMaterial({
+    color:0xf3c969,size:.34,map:sprite,alphaTest:.01,transparent:true,opacity:.55,
+    blending:THREE.AdditiveBlending,depthWrite:false,sizeAttenuation:true});
+  scene.add(new THREE.Points(geo,mat));
+  const mat2=new THREE.PointsMaterial({
+    color:0xc9552e,size:.5,map:sprite,alphaTest:.01,transparent:true,opacity:.3,
+    blending:THREE.AdditiveBlending,depthWrite:false,sizeAttenuation:true});
+  const pos2=pos.slice(); const geo2=new THREE.BufferGeometry();
+  geo2.setAttribute('position',new THREE.BufferAttribute(pos2,3));
+  scene.add(new THREE.Points(geo2,mat2));
+  function resize(){renderer.setSize(innerWidth,innerHeight,false);
+    cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix();}
+  resize();addEventListener('resize',resize);
+  let mx=0,my=0,vel=0,lastY=scrollY;
+  addEventListener('pointermove',e=>{mx=e.clientX/innerWidth*2-1;my=e.clientY/innerHeight*2-1;});
+  (function frame(ts){
+    const t=(ts||0)*0.001;
+    const dy=scrollY-lastY; lastY=scrollY;
+    vel+= (Math.min(40,Math.abs(dy))-vel)*0.08;
+    const stir=1+vel*0.12;
+    const a=geo.attributes.position.array, b=geo2.attributes.position.array;
+    for(let i=0;i<N;i++){
+      const s=seed[i];
+      a[i*3]  += Math.sin(t*.3+s)*0.004*stir;
+      a[i*3+1]+= (0.006+Math.sin(s)*0.002)*stir;
+      if(a[i*3+1]>16)a[i*3+1]=-16;
+      b[i*3]  -= Math.sin(t*.24+s)*0.003*stir;
+      b[i*3+1]+= (0.004+Math.cos(s)*0.002)*stir;
+      if(b[i*3+1]>16)b[i*3+1]=-16;
+    }
+    geo.attributes.position.needsUpdate=true;
+    geo2.attributes.position.needsUpdate=true;
+    cam.position.x+=(mx*1.6-cam.position.x)*0.03;
+    cam.position.y+=(-my*1.0-cam.position.y)*0.03;
+    cam.lookAt(0,0,0);
+    renderer.render(scene,cam);
+    requestAnimationFrame(frame);
+  })();
+})();
+
+/* ═══ GSAP: entrance, pinned horizontal journey, parallax, progress ═══ */
+(function(){
+  if(!window.gsap)return;
+  gsap.registerPlugin(ScrollTrigger);
+
+  /* intro entrance */
+  gsap.from('.intro > *',{y:26,opacity:0,duration:1.1,stagger:.12,ease:'power3.out',delay:.15});
+
+  const mm=gsap.matchMedia();
+  mm.add('(min-width: 861px)',()=>{
+    const track=document.getElementById('track');
+    const dist=()=>track.scrollWidth-innerWidth;
+    const tween=gsap.to(track,{
+      x:()=>-dist(),
+      ease:'none',
+      scrollTrigger:{
+        trigger:'#hwrap',pin:true,scrub:1,
+        end:()=>'+='+dist(),
+        invalidateOnRefresh:true,
+        onUpdate:self=>gsap.set('#prog i',{scaleX:self.progress}),
+      }
+    });
+    /* the big numbers drag slower than their panels (parallax) */
+    gsap.utils.toArray('.panel .num').forEach(num=>{
+      gsap.fromTo(num,{x:60},{x:-120,ease:'none',
+        scrollTrigger:{trigger:num.parentElement,containerAnimation:tween,
+          start:'left right',end:'right left',scrub:true}});
+    });
+    /* panel bodies breathe in as they arrive */
+    gsap.utils.toArray('.panel .body').forEach(body=>{
+      gsap.from(body,{y:40,opacity:0,duration:.8,ease:'power3.out',
+        scrollTrigger:{trigger:body,containerAnimation:tween,
+          start:'left 82%',toggleActions:'play none none reverse'}});
+    });
+    return ()=>{};
+  });
+  mm.add('(max-width: 860px)',()=>{
+    /* vertical: simple reveals + page progress */
+    gsap.utils.toArray('.panel .body').forEach(body=>{
+      gsap.from(body,{y:36,opacity:0,duration:.8,ease:'power3.out',
+        scrollTrigger:{trigger:body,start:'top 86%',toggleActions:'play none none reverse'}});
+    });
+    const upd=()=>{const m=document.body.scrollHeight-innerHeight;
+      gsap.set('#prog i',{scaleX:m>0?scrollY/m:0});};
+    addEventListener('scroll',upd,{passive:true}); upd();
+    return ()=>removeEventListener('scroll',upd);
+  });
+})();
+</script>
+</body>
+</html>

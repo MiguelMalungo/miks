@@ -185,10 +185,10 @@
   .tpick .tpick-btn .cur{flex:1;overflow:hidden;text-overflow:ellipsis;color:var(--sand)}
   .tpick .tpick-btn .caret{color:var(--mist);font-size:8px}
   .tpick-list{
-    position:absolute;left:0;right:0;bottom:calc(100% + 5px);z-index:45;display:none;
+    position:absolute;left:0;right:0;top:calc(100% + 5px);z-index:45;display:none;
     max-height:230px;overflow-y:auto;
     background:#1d150c;border:1px solid var(--hair);border-radius:10px;
-    box-shadow:0 -18px 44px -12px rgba(0,0,0,.75);
+    box-shadow:0 18px 44px -12px rgba(0,0,0,.75);
     scrollbar-width:thin;scrollbar-color:var(--hair) transparent;
   }
   .tpick-list.open{display:block}
@@ -244,7 +244,10 @@
     font-family:'IBM Plex Mono';font-size:10px;letter-spacing:.18em;text-transform:uppercase;
     background:rgba(224,159,62,.07);border:1px solid var(--hair);color:var(--bone);
     border-radius:9px;padding:10px 15px;cursor:pointer;transition:all .25s;
+    display:inline-flex;align-items:center;gap:7px;
   }
+  .tbtn svg{width:12px;height:12px;fill:currentColor;flex:none;display:block}
+  .tbtn.iconly{padding:10px 12px}
   .tbtn:hover{border-color:var(--ochre)}
   .tbtn:disabled{opacity:.35;cursor:not-allowed}
   .tbtn.play.on{background:var(--gold);border-color:var(--gold);color:#2a1206;font-weight:600}
@@ -385,6 +388,19 @@
     .orbit{width:100%;max-width:none;aspect-ratio:auto;height:14vh;min-height:72px;cursor:default}
     .ptext{width:100%;height:100%;left:0;top:0;transform:none}
   }
+  /* ── shared mobile chrome: header→bottom bar, no EQ, crossfade lifted ── */
+  @media (max-width:700px), (max-height:560px) and (orientation:landscape){
+    header{position:fixed;left:0;right:0;bottom:0;top:auto;justify-content:center;
+      padding:8px 16px;background:rgba(18,12,7,.93);backdrop-filter:blur(10px);
+      border-top:1px solid var(--hair-dim);z-index:60}
+    .brand{left:16px}
+    footer{display:none}
+    body{padding-bottom:50px}
+    .eq{display:none}
+    .mixlogo{display:none}
+    .center{gap:10px;padding:6px 10px}
+    .center .xf{order:-1}
+  }
 </style>
 </head>
 <body>
@@ -474,8 +490,8 @@
         </div>
         <div class="wave" id="waveA"><canvas></canvas><div class="empty-note">NO TRACK</div></div>
         <div class="transport">
-          <button class="tbtn" id="backA" disabled title="Back to beginning">⏮</button>
-          <button class="tbtn play" id="playA" disabled>▶ PLAY</button>
+          <button class="tbtn iconly" id="backA" disabled title="Back to start"><svg viewBox="0 0 24 24"><path d="M6 5h2v14H6zM20 5v14l-11-7z"/></svg></button>
+          <button class="tbtn play" id="playA" disabled><svg viewBox="0 0 24 24"><path d="M7 4l13 8-13 8z"/></svg><span>PLAY</span></button>
           <button class="tbtn sync" id="syncA" disabled>SYNC</button>
           <div class="loopset">
             <button class="lbtn" data-deck="a" data-loop="4">LOOP 4</button>
@@ -525,8 +541,8 @@
         </div>
         <div class="wave" id="waveB"><canvas></canvas><div class="empty-note">NO TRACK</div></div>
         <div class="transport">
-          <button class="tbtn" id="backB" disabled title="Back to beginning">⏮</button>
-          <button class="tbtn play" id="playB" disabled>▶ PLAY</button>
+          <button class="tbtn iconly" id="backB" disabled title="Back to start"><svg viewBox="0 0 24 24"><path d="M6 5h2v14H6zM20 5v14l-11-7z"/></svg></button>
+          <button class="tbtn play" id="playB" disabled><svg viewBox="0 0 24 24"><path d="M7 4l13 8-13 8z"/></svg><span>PLAY</span></button>
           <button class="tbtn sync" id="syncB" disabled>SYNC</button>
           <div class="loopset">
             <button class="lbtn" data-deck="b" data-loop="4">LOOP 4</button>
@@ -1165,9 +1181,11 @@ const ui={
     if(d.playing){d.pause();}else{d.play();}
   });
   $('back'+S).addEventListener('click',()=>d.seek(0));
-  d.el.addEventListener('play',()=>{$('play'+S).classList.add('on');$('play'+S).textContent='❚❚ PAUSE';applyXfade();});
-  d.el.addEventListener('pause',()=>{$('play'+S).classList.remove('on');$('play'+S).textContent='▶ PLAY';});
-  d.el.addEventListener('ended',()=>{$('play'+S).classList.remove('on');$('play'+S).textContent='▶ PLAY';});
+  const ICO_PLAY='<svg viewBox="0 0 24 24"><path d="M7 4l13 8-13 8z"/></svg><span>PLAY</span>';
+  const ICO_PAUSE='<svg viewBox="0 0 24 24"><path d="M6 4h4v16H6zM14 4h4v16h-4z"/></svg><span>PAUSE</span>';
+  d.el.addEventListener('play',()=>{$('play'+S).classList.add('on');$('play'+S).innerHTML=ICO_PAUSE;applyXfade();});
+  d.el.addEventListener('pause',()=>{$('play'+S).classList.remove('on');$('play'+S).innerHTML=ICO_PLAY;});
+  d.el.addEventListener('ended',()=>{$('play'+S).classList.remove('on');$('play'+S).innerHTML=ICO_PLAY;});
   $('sync'+S).addEventListener('click',()=>{d.sync(decks[k==='a'?'b':'a']);});
   /* wave seek */
   const wave=$('wave'+S);

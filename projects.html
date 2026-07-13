@@ -21,9 +21,9 @@
   #bg{position:fixed;inset:0;z-index:0;overflow:hidden;background:#0d0906}
   #bg video{position:absolute;left:50%;top:50%;width:106%;height:106%;
     transform:translate(-50%,-50%);object-fit:cover}
-  #vFog{filter:blur(46px) brightness(.32) saturate(1.25)}
+  #vFog{filter:blur(46px) brightness(.34) grayscale(1) contrast(1.08)}
   #vFocus{
-    filter:blur(18px) brightness(.55) saturate(1.25);
+    filter:blur(18px) brightness(.58) grayscale(1) contrast(1.08);
     -webkit-mask-image:radial-gradient(circle var(--fr,270px) at var(--fx,-999px) var(--fy,-999px),
       rgba(0,0,0,.95) 0%, rgba(0,0,0,.5) 48%, transparent 74%);
     mask-image:radial-gradient(circle var(--fr,270px) at var(--fx,-999px) var(--fy,-999px),

@@ -15,14 +15,22 @@
   }
   *{margin:0;padding:0;box-sizing:border-box}
   html{scroll-behavior:auto}
-  body{
-    background:
-      radial-gradient(ellipse 70% 50% at 16% 18%, rgba(201,85,46,.09), transparent 62%),
-      radial-gradient(ellipse 55% 60% at 85% 80%, rgba(224,159,62,.07), transparent 62%),
-      var(--coffee);
-    color:var(--bone);font-family:'Sora',sans-serif;overflow-x:hidden;
+  body{background:var(--coffee);color:var(--bone);font-family:'Sora',sans-serif;overflow-x:hidden}
+
+  /* page backdrop — home-style fog, running on bkgc.mp4 */
+  #bg{position:fixed;inset:0;z-index:0;overflow:hidden;background:#0d0906}
+  #bg video{position:absolute;left:50%;top:50%;width:106%;height:106%;
+    transform:translate(-50%,-50%);object-fit:cover}
+  #vFog{filter:blur(46px) brightness(.32) saturate(1.25)}
+  #vFocus{
+    filter:blur(18px) brightness(.55) saturate(1.25);
+    -webkit-mask-image:radial-gradient(circle var(--fr,270px) at var(--fx,-999px) var(--fy,-999px),
+      rgba(0,0,0,.95) 0%, rgba(0,0,0,.5) 48%, transparent 74%);
+    mask-image:radial-gradient(circle var(--fr,270px) at var(--fx,-999px) var(--fy,-999px),
+      rgba(0,0,0,.95) 0%, rgba(0,0,0,.5) 48%, transparent 74%);
   }
-  #dust{position:fixed;inset:0;z-index:0;pointer-events:none}
+  #bg::after{content:"";position:absolute;inset:0;
+    background:radial-gradient(ellipse 120% 100% at 50% 42%, transparent 52%, rgba(10,6,3,.78));}
   header,main,footer{position:relative;z-index:2}
 
   header{display:flex;justify-content:center;align-items:center;position:relative;padding:24px 42px 16px}
@@ -34,45 +42,70 @@
   nav a:hover,nav a.on{color:var(--gold)}
 
   /* intro */
-  .intro{min-height:62vh;display:flex;flex-direction:column;justify-content:center;
+  .intro{min-height:56vh;display:flex;flex-direction:column;justify-content:center;
     align-items:center;text-align:center;padding:4vh 24px 0}
   .kick{font-family:'IBM Plex Mono';font-size:10px;letter-spacing:.5em;color:var(--gold);text-transform:uppercase}
   .intro h1{
     font-weight:200;font-size:clamp(52px,9vw,132px);line-height:.95;letter-spacing:-.02em;margin-top:18px;
     background:linear-gradient(175deg,var(--bone) 30%,var(--sand) 62%,var(--ochre) 105%);
     -webkit-background-clip:text;background-clip:text;color:transparent;
+    text-shadow:none;
   }
   .intro h1 i{font-style:normal;font-weight:600}
-  .intro p{margin-top:22px;color:var(--sand);font-weight:300;font-size:15px;max-width:52ch;line-height:1.7}
+  .intro p{margin-top:22px;color:var(--sand);font-weight:300;font-size:15px;max-width:54ch;line-height:1.7;
+    text-shadow:0 1px 10px rgba(0,0,0,.7)}
   .hint{margin-top:5vh;font-family:'IBM Plex Mono';font-size:9px;letter-spacing:.34em;
     color:var(--mist);text-transform:uppercase;display:flex;align-items:center;gap:12px}
   .hint .ln{width:64px;height:1px;background:linear-gradient(90deg,var(--hair),transparent)}
 
-  /* horizontal journey */
+  /* horizontal journey of video cards */
   #hwrap{position:relative;overflow:hidden}
   #track{display:flex;align-items:stretch;will-change:transform}
-  .panel{
-    flex:0 0 auto;width:min(760px,86vw);min-height:78vh;
-    display:flex;flex-direction:column;justify-content:center;
-    padding:6vh 7vw;position:relative;
+  .panel{flex:0 0 auto;width:min(880px,92vw);height:80vh;padding:4vh 2.2vw;display:flex}
+  .card{
+    position:relative;flex:1;border-radius:26px;overflow:hidden;
+    display:flex;flex-direction:column;justify-content:flex-end;
+    padding:6vh 5vw;border:1px solid var(--hair-dim);
+    transition:border-color .5s, box-shadow .5s;
   }
-  .panel .num{
-    position:absolute;top:4vh;left:5vw;z-index:0;
-    font-weight:600;font-size:clamp(140px,24vh,260px);line-height:1;
-    color:transparent;-webkit-text-stroke:1px rgba(224,159,62,.28);
+  .card[data-href]{cursor:pointer}
+  .card:hover{border-color:var(--hair);box-shadow:0 30px 80px -30px rgba(0,0,0,.8), 0 0 40px -18px rgba(224,159,62,.35)}
+  /* each card carries its own tone-graded cut of the home video —
+     fogged and muted at rest, its colour wakes up on hover */
+  .card video{
+    position:absolute;left:50%;top:50%;width:112%;height:112%;
+    transform:translate(-50%,-50%);object-fit:cover;z-index:0;
+    filter:blur(28px) brightness(.34) saturate(.25);
+    transition:filter 1s ease, transform 1.2s ease;
+  }
+  .card:hover video{
+    filter:blur(16px) brightness(.52) saturate(1.35);
+    transform:translate(-50%,-50%) scale(1.05);
+  }
+  .card .scrim{position:absolute;inset:0;z-index:1;
+    background:linear-gradient(180deg,rgba(10,6,3,.18),rgba(10,6,3,.74) 80%)}
+  .card .num{
+    position:absolute;top:3vh;left:2vw;z-index:2;
+    font-weight:600;font-size:clamp(120px,20vh,220px);line-height:1;
+    color:transparent;-webkit-text-stroke:1px rgba(224,159,62,.32);
     user-select:none;will-change:transform;
   }
-  .panel .body{position:relative;z-index:1;max-width:32em}
-  .panel .tag{font-family:'IBM Plex Mono';font-size:9.5px;letter-spacing:.34em;
+  .card .body{position:relative;z-index:3;max-width:34em}
+  .card .tag{font-family:'IBM Plex Mono';font-size:9.5px;letter-spacing:.34em;
     color:var(--gold);text-transform:uppercase}
-  .panel h2{font-weight:200;font-size:clamp(40px,6vw,76px);line-height:1.02;
-    letter-spacing:-.015em;margin:14px 0 18px}
-  .panel h2 b{font-weight:600}
-  .panel p{color:var(--sand);font-weight:300;font-size:14.5px;line-height:1.75;max-width:46ch}
-  .panel .foot{margin-top:26px;display:flex;gap:26px;align-items:center}
-  .panel .meta{font-family:'IBM Plex Mono';font-size:9px;letter-spacing:.22em;color:var(--mist);text-transform:uppercase}
-  .panel .rule{position:absolute;left:5vw;right:5vw;bottom:6vh;height:1px;
-    background:linear-gradient(90deg,var(--hair),transparent)}
+  .card h2{font-weight:200;font-size:clamp(36px,5.4vw,68px);line-height:1.02;
+    letter-spacing:-.015em;margin:12px 0 16px}
+  .card h2 b{font-weight:600}
+  .card p{color:var(--sand);font-weight:300;font-size:14.5px;line-height:1.75;max-width:48ch}
+  .card .foot{margin-top:22px;display:flex;gap:22px;align-items:center;flex-wrap:wrap}
+  .card .meta{font-family:'IBM Plex Mono';font-size:9px;letter-spacing:.22em;color:var(--mist);text-transform:uppercase}
+  .card .visit{
+    font-family:'IBM Plex Mono';font-size:9.5px;letter-spacing:.24em;text-transform:uppercase;
+    color:var(--bone);text-decoration:none;border:1px solid var(--hair);border-radius:999px;
+    padding:11px 22px;transition:all .3s;
+  }
+  .card .visit:hover{border-color:var(--gold);background:rgba(224,159,62,.1);
+    box-shadow:0 0 22px -8px rgba(224,159,62,.5)}
 
   /* progress line */
   #prog{position:fixed;left:0;right:0;bottom:0;height:2px;z-index:40;
@@ -80,8 +113,8 @@
   #prog i{display:block;height:100%;width:100%;transform-origin:0 50%;transform:scaleX(0);
     background:linear-gradient(90deg,var(--clay),var(--ochre),var(--gold))}
 
-  .outro{min-height:46vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:18px;padding:0 24px}
-  .outro h3{font-weight:200;font-size:clamp(26px,3.6vw,44px)}
+  .outro{min-height:42vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:18px;padding:0 24px}
+  .outro h3{font-weight:200;font-size:clamp(26px,3.6vw,44px);text-shadow:0 1px 12px rgba(0,0,0,.7)}
   .outro h3 b{font-weight:600;color:var(--gold)}
   .outro a{
     font-family:'IBM Plex Mono';font-size:10px;letter-spacing:.3em;text-transform:uppercase;
@@ -94,12 +127,12 @@
   footer .m{font-family:'IBM Plex Mono';font-size:9px;letter-spacing:.28em;color:var(--mist);text-transform:uppercase}
 
   @media (max-width:860px){
-    /* vertical fallback: no pinning, panels stack */
-    #track{flex-direction:column}
-    .panel{width:100%;min-height:0;padding:9vh 8vw}
-    .panel .num{position:static;font-size:80px;-webkit-text-stroke-color:rgba(224,159,62,.35);margin-bottom:6px}
-    .panel .rule{position:static;margin-top:5vh}
-    .intro{min-height:48vh}
+    /* vertical fallback: cards stack */
+    #track{flex-direction:column;gap:4vh;padding:0 5vw}
+    .panel{width:100%;height:auto;min-height:66vh;padding:0}
+    .card{padding:5vh 7vw}
+    .card .num{font-size:92px;top:2.4vh;left:5vw}
+    .intro{min-height:44vh}
   }
   @media (max-width:700px){
     header{position:fixed;left:0;right:0;bottom:0;top:auto;justify-content:center;
@@ -117,7 +150,10 @@
 </head>
 <body>
 
-<canvas id="dust"></canvas>
+<div id="bg">
+  <video id="vFog"   src="media/bkgc.mp4" muted loop playsinline autoplay></video>
+  <video id="vFocus" src="media/bkgc.mp4" muted loop playsinline autoplay></video>
+</div>
 
 <header>
   <a class="brand" href="index.html" aria-label="MiKS home"><img src="media/logo.png" alt="MiKS"></a>
@@ -135,8 +171,9 @@
   <section class="intro">
     <span class="kick">Beyond the decks</span>
     <h1>Works &<br><i>worlds.</i></h1>
-    <p>Five ongoing projects — stages, tapes, vinyl, villages and water.
-       Each one another way of asking the same question: how far can a rhythm travel?</p>
+    <p>Four ongoing projects — code that breathes, poems made of ink, stages shared
+       with other artists, and a classroom with the decks left on. Different rooms,
+       same pulse.</p>
     <div class="hint"><span class="ln" style="transform:scaleX(-1)"></span>SCROLL TO TRAVEL<span class="ln"></span></div>
   </section>
 
@@ -144,68 +181,73 @@
     <div id="track">
 
       <article class="panel">
-        <div class="num">01</div>
-        <div class="body">
-          <span class="tag">Live A/V Show</span>
-          <h2>Roots in <b>Motion</b></h2>
-          <p>A two-hour improvised blend — no setlist, no safety net. Two crates,
-             one pulse, and a light rig that listens. Every city hears a show that
-             will never exist again.</p>
-          <div class="foot"><span class="meta">TOURING · SINCE 2021</span></div>
+        <div class="card" data-href="https://miguelmalungo.github.io/kept/">
+          <video src="media/projA.mp4" muted loop playsinline autoplay></video>
+          <div class="scrim"></div>
+          <div class="num">01</div>
+          <div class="body">
+            <span class="tag">Interactive Experience</span>
+            <h2>Serenity <b>Project</b></h2>
+            <p>A quiet corner of the internet. An interactive piece built for slowing
+               down — soft motion, softer sound, and nothing asking for your attention.
+               Enter, breathe, stay as long as you need.</p>
+            <div class="foot">
+              <a class="visit" href="https://miguelmalungo.github.io/kept/" target="_blank" rel="noopener">Visit ↗</a>
+              <span class="meta">LIVE ON THE WEB</span>
+            </div>
+          </div>
         </div>
-        <div class="rule"></div>
       </article>
 
       <article class="panel">
-        <div class="num">02</div>
-        <div class="body">
-          <span class="tag">Mix Series</span>
-          <h2>Kamba <b>Tapes</b></h2>
-          <p>A monthly hour with a friend — kamba — from somewhere on the
-             Luanda–Lisboa–Joburg triangle. Recorded in one take, released on the
-             full moon, archived forever.</p>
-          <div class="foot"><span class="meta">EP. 038 · MONTHLY</span></div>
+        <div class="card" data-href="https://miguelmalungo.github.io/BlocksExpanded/">
+          <video src="media/projB.mp4" muted loop playsinline autoplay></video>
+          <div class="scrim"></div>
+          <div class="num">02</div>
+          <div class="body">
+            <span class="tag">Living Poetry</span>
+            <h2>Blocks <b>Expanded</b></h2>
+            <p>The poetry book <em>BLOCKS</em>, re-set in living type — 67 poems sampled
+               into thousands of grains of ink that reform around every word you touch.
+               Reading becomes excavation.</p>
+            <div class="foot">
+              <a class="visit" href="https://miguelmalungo.github.io/BlocksExpanded/" target="_blank" rel="noopener">Visit ↗</a>
+              <span class="meta">67 POEMS · INTERACTIVE EDITION</span>
+            </div>
+          </div>
         </div>
-        <div class="rule"></div>
       </article>
 
       <article class="panel">
-        <div class="num">03</div>
-        <div class="body">
-          <span class="tag">Vinyl Imprint</span>
-          <h2>Golden <b>Hour</b></h2>
-          <p>A small label for tracks that deserve weight. 500 copies per release,
-             hand-numbered, mastered for the floor. Digital comes later — the groove
-             comes first.</p>
-          <div class="foot"><span class="meta">GH-007 · OUT NOW</span></div>
+        <div class="card">
+          <video src="media/projC.mp4" muted loop playsinline autoplay></video>
+          <div class="scrim"></div>
+          <div class="num">03</div>
+          <div class="body">
+            <span class="tag">Live Collaborations</span>
+            <h2>Roots in <b>Motion</b></h2>
+            <p>Collaborations with local artists in every city — live music meeting
+               digital art, with visual performances improvised in real time on stage.
+               No two rooms, and no two nights, ever the same.</p>
+            <div class="foot"><span class="meta">LIVE MUSIC × LIVE VISUALS · TOURING</span></div>
+          </div>
         </div>
-        <div class="rule"></div>
       </article>
 
       <article class="panel">
-        <div class="num">04</div>
-        <div class="body">
-          <span class="tag">Community</span>
-          <h2>The <b>Yard</b></h2>
-          <p>Free production and DJ workshops in community spaces — decks, drum
-             machines and patience. The next generation shouldn't need permission
-             to make noise.</p>
-          <div class="foot"><span class="meta">LUANDA · LISBOA · 200+ ALUMNI</span></div>
+        <div class="card">
+          <video src="media/projD.mp4" muted loop playsinline autoplay></video>
+          <div class="scrim"></div>
+          <div class="num">04</div>
+          <div class="body">
+            <span class="tag">Community & Education</span>
+            <h2>The <b>Yard</b></h2>
+            <p>Free workshops in community spaces — DJing and VJing, live visuals, and
+               generative-AI tools for art production. Youngsters leave with a set,
+               a show, and a new way of making.</p>
+            <div class="foot"><span class="meta">LUANDA · LISBOA · 200+ ALUMNI</span></div>
+          </div>
         </div>
-        <div class="rule"></div>
-      </article>
-
-      <article class="panel">
-        <div class="num">05</div>
-        <div class="body">
-          <span class="tag">Installation</span>
-          <h2>Water<b>line</b></h2>
-          <p>A generative sound piece driven by live tidal data from the Atlantic.
-             The ocean writes the arrangement; the room breathes with it. First shown
-             at a lighthouse, naturally.</p>
-          <div class="foot"><span class="meta">GENERATIVE · TIDAL DATA · 2024</span></div>
-        </div>
-        <div class="rule"></div>
       </article>
 
     </div>
@@ -221,84 +263,37 @@
 
 <footer><span class="m">© MiKS · all blends live · all rights reserved</span></footer>
 
-<script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js"></script>
 <script>
-/* ═══ gold ember dust — three.js, drifts up, stirred by scroll ═══ */
+/* ═══ page fog (bkgc) — keep playing, focus circle follows the cursor ═══ */
 (function(){
-  if(!window.THREE)return;
-  const canvas=document.getElementById('dust');
-  const renderer=new THREE.WebGLRenderer({canvas,alpha:true,antialias:false});
-  renderer.setPixelRatio(Math.min(devicePixelRatio||1,2));
-  const scene=new THREE.Scene();
-  const cam=new THREE.PerspectiveCamera(55,1,.1,100); cam.position.z=22;
-  /* soft round ember sprite */
-  const sc=document.createElement('canvas');sc.width=sc.height=64;
-  const sg=sc.getContext('2d');
-  const grd=sg.createRadialGradient(32,32,0,32,32,32);
-  grd.addColorStop(0,'rgba(255,255,255,1)');
-  grd.addColorStop(.4,'rgba(255,255,255,.55)');
-  grd.addColorStop(1,'rgba(255,255,255,0)');
-  sg.fillStyle=grd;sg.fillRect(0,0,64,64);
-  const sprite=new THREE.CanvasTexture(sc);
-
-  const N=900;
-  const pos=new Float32Array(N*3), seed=new Float32Array(N);
-  for(let i=0;i<N;i++){
-    pos[i*3]= (Math.random()-.5)*46;
-    pos[i*3+1]=(Math.random()-.5)*30;
-    pos[i*3+2]=(Math.random()-.5)*18;
-    seed[i]=Math.random()*100;
-  }
-  const geo=new THREE.BufferGeometry();
-  geo.setAttribute('position',new THREE.BufferAttribute(pos,3));
-  const mat=new THREE.PointsMaterial({
-    color:0xf3c969,size:.34,map:sprite,alphaTest:.01,transparent:true,opacity:.55,
-    blending:THREE.AdditiveBlending,depthWrite:false,sizeAttenuation:true});
-  scene.add(new THREE.Points(geo,mat));
-  const mat2=new THREE.PointsMaterial({
-    color:0xc9552e,size:.5,map:sprite,alphaTest:.01,transparent:true,opacity:.3,
-    blending:THREE.AdditiveBlending,depthWrite:false,sizeAttenuation:true});
-  const pos2=pos.slice(); const geo2=new THREE.BufferGeometry();
-  geo2.setAttribute('position',new THREE.BufferAttribute(pos2,3));
-  scene.add(new THREE.Points(geo2,mat2));
-  function resize(){renderer.setSize(innerWidth,innerHeight,false);
-    cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix();}
-  resize();addEventListener('resize',resize);
-  let mx=0,my=0,vel=0,lastY=scrollY;
-  addEventListener('pointermove',e=>{mx=e.clientX/innerWidth*2-1;my=e.clientY/innerHeight*2-1;});
-  (function frame(ts){
-    const t=(ts||0)*0.001;
-    const dy=scrollY-lastY; lastY=scrollY;
-    vel+= (Math.min(40,Math.abs(dy))-vel)*0.08;
-    const stir=1+vel*0.12;
-    const a=geo.attributes.position.array, b=geo2.attributes.position.array;
-    for(let i=0;i<N;i++){
-      const s=seed[i];
-      a[i*3]  += Math.sin(t*.3+s)*0.004*stir;
-      a[i*3+1]+= (0.006+Math.sin(s)*0.002)*stir;
-      if(a[i*3+1]>16)a[i*3+1]=-16;
-      b[i*3]  -= Math.sin(t*.24+s)*0.003*stir;
-      b[i*3+1]+= (0.004+Math.cos(s)*0.002)*stir;
-      if(b[i*3+1]>16)b[i*3+1]=-16;
-    }
-    geo.attributes.position.needsUpdate=true;
-    geo2.attributes.position.needsUpdate=true;
-    cam.position.x+=(mx*1.6-cam.position.x)*0.03;
-    cam.position.y+=(-my*1.0-cam.position.y)*0.03;
-    cam.lookAt(0,0,0);
-    renderer.render(scene,cam);
-    requestAnimationFrame(frame);
-  })();
+  const fog=document.getElementById('vFog'), foc=document.getElementById('vFocus');
+  const kick=()=>{document.querySelectorAll('video').forEach(v=>{if(v.paused)v.play().catch(()=>{});});};
+  kick();
+  ['pointerdown','pointermove','touchstart','keydown','scroll'].forEach(e=>addEventListener(e,kick,{passive:true}));
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden)kick();});
+  setInterval(()=>{if(Math.abs(fog.currentTime-foc.currentTime)>0.1)foc.currentTime=fog.currentTime;},4000);
+  let tx=-999,ty=-999,cx=-999,cy=-999;
+  addEventListener('pointermove',e=>{tx=e.clientX;ty=e.clientY;});
+  (function loop(){cx+=(tx-cx)*.14;cy+=(ty-cy)*.14;
+    foc.style.setProperty('--fx',cx.toFixed(1)+'px');
+    foc.style.setProperty('--fy',cy.toFixed(1)+'px');
+    requestAnimationFrame(loop);})();
 })();
+
+/* cards 01/02 open their live projects */
+document.querySelectorAll('.card[data-href]').forEach(c=>{
+  c.addEventListener('click',e=>{
+    if(e.target.closest('a'))return;            /* the Visit pill handles itself */
+    window.open(c.dataset.href,'_blank','noopener');
+  });
+});
 
 /* ═══ GSAP: entrance, pinned horizontal journey, parallax, progress ═══ */
 (function(){
   if(!window.gsap)return;
   gsap.registerPlugin(ScrollTrigger);
-
-  /* intro entrance */
   gsap.from('.intro > *',{y:26,opacity:0,duration:1.1,stagger:.12,ease:'power3.out',delay:.15});
 
   const mm=gsap.matchMedia();
@@ -315,25 +310,22 @@
         onUpdate:self=>gsap.set('#prog i',{scaleX:self.progress}),
       }
     });
-    /* the big numbers drag slower than their panels (parallax) */
-    gsap.utils.toArray('.panel .num').forEach(num=>{
-      gsap.fromTo(num,{x:60},{x:-120,ease:'none',
-        scrollTrigger:{trigger:num.parentElement,containerAnimation:tween,
+    gsap.utils.toArray('.card .num').forEach(num=>{
+      gsap.fromTo(num,{x:50},{x:-90,ease:'none',
+        scrollTrigger:{trigger:num.closest('.panel'),containerAnimation:tween,
           start:'left right',end:'right left',scrub:true}});
     });
-    /* panel bodies breathe in as they arrive */
-    gsap.utils.toArray('.panel .body').forEach(body=>{
+    gsap.utils.toArray('.card .body').forEach(body=>{
       gsap.from(body,{y:40,opacity:0,duration:.8,ease:'power3.out',
         scrollTrigger:{trigger:body,containerAnimation:tween,
-          start:'left 82%',toggleActions:'play none none reverse'}});
+          start:'left 85%',toggleActions:'play none none reverse'}});
     });
     return ()=>{};
   });
   mm.add('(max-width: 860px)',()=>{
-    /* vertical: simple reveals + page progress */
-    gsap.utils.toArray('.panel .body').forEach(body=>{
+    gsap.utils.toArray('.card .body').forEach(body=>{
       gsap.from(body,{y:36,opacity:0,duration:.8,ease:'power3.out',
-        scrollTrigger:{trigger:body,start:'top 86%',toggleActions:'play none none reverse'}});
+        scrollTrigger:{trigger:body,start:'top 88%',toggleActions:'play none none reverse'}});
     });
     const upd=()=>{const m=document.body.scrollHeight-innerHeight;
       gsap.set('#prog i',{scaleX:m>0?scrollY/m:0});};

@@ -617,6 +617,9 @@ ticks('ticksA',28);ticks('ticksB',28);
 let AC=null;
 function ctx(){ if(!AC){AC=new (window.AudioContext||window.webkitAudioContext)();}
   if(AC.state==='suspended')AC.resume(); return AC; }
+/* seeks/starts are scheduled this far ahead so they land on an exact context
+   time (start(0) would round to the next render quantum and skew the clock) */
+const START_LEAD=0.005;
 
 /* Playback runs on AudioBufferSourceNodes, not <audio> elements: on iOS
    Safari every playbackRate change on a media element interrupts the audio
@@ -683,13 +686,14 @@ class BufferPlayer extends EventTarget{
     const c=ctx(), s=c.createBufferSource();
     s.buffer=this.buffer; s.playbackRate.value=this._rate;
     s.connect(this.out);
-    this._offset=at; this._t0=c.currentTime;
+    const t0=c.currentTime+START_LEAD;
+    this._offset=at; this._t0=t0;
     s.onended=()=>{                          /* natural end only — seeks/stops detach first */
       if(s!==this._src)return;
       this._src=null; this._playing=false; this._offset=this.duration;
       this.dispatchEvent(new Event('ended'));
     };
-    s.start(0,Math.min(at,Math.max(0,this.buffer.duration-0.01)));
+    s.start(t0,Math.min(at,Math.max(0,this.buffer.duration-0.01)));
     this._src=s;
   }
   _stopSrc(){
@@ -731,8 +735,8 @@ class Deck{
   pause(){ this.el.pause(); }
   stop(){ this.el.pause(); this.el.currentTime=0; }
   seek(t){ if(this.track) this.el.currentTime=Math.max(0,Math.min(this.track.duration-0.05,t)); }
-  /* effective bpm right now */
-  effBpm(){ return this.track&&this.track.bpm ? this.track.bpm*this.el.playbackRate : null; }
+  /* effective bpm right now (base rate — phaseHold's momentary bends excluded) */
+  effBpm(){ return this.track&&this.track.bpm ? this.track.bpm*this.rate : null; }
   setRate(r){ this.el.playbackRate=r; this.rate=r; }
   /* beat position (in beats, track grid) at current moment */
   beatPos(){ const t=this.track; if(!t||!t.bpm)return null;
@@ -746,32 +750,45 @@ class Deck{
     const rate=target/t.bpm;
     if(rate<0.5||rate>2){toast('Tempos too far apart to sync sensibly ('+t.bpm.toFixed(1)+' → '+target.toFixed(1)+').');return false;}
     this.setRate(rate);
-    /* phase align: seek only if far off, then glide gently into lock */
-    if(this.playing&&other.playing){
-      const myB=this.beatPos(), otB=other.beatPos();
-      let d=((otB-myB)%1+1)%1; if(d>0.5)d-=1;      /* shortest path, in beats */
-      if(Math.abs(d)>0.25) this.el.currentTime += d*(60/t.bpm);
-      this.phaseHold(other,rate);
-    }
     this.synced=true;
+    /* phase align: snap straight onto the other's grid (no audible glide),
+       then hold. phaseHold also snaps a deck that starts playing later. */
+    this.snapPhase(other);
+    this.phaseHold(other,rate);
     ui.onSync(this);
     return true;
   }
-  /* hold the lock like a steady hand on the platter:
-     one firmer glide to land the beat (≤2%, a second or two), then only
-     whisper-corrections (≤0.5% ≈ 8 cents — inaudible) against slow drift.
-     No time-stretcher, no constant warble: just clean resampled audio. */
+  /* seek so this deck's beat grid lands exactly on the other's — a beat-snap,
+     sample-accurate on the buffer engine, instead of seconds of detuned glide */
+  snapPhase(other){
+    const t=this.track;
+    if(!t||!t.bpm||!other.track||!other.track.bpm)return;
+    if(!(this.playing&&other.playing))return;
+    const myB=this.beatPos(), otB=other.beatPos();
+    let d=((otB-myB)%1+1)%1; if(d>0.5)d-=1;        /* shortest path, in beats */
+    /* aim START_LEAD ahead: the restarted source sits silent that long while
+       the other deck keeps moving */
+    if(Math.abs(d)>0.01)
+      this.el.currentTime += d*(60/t.bpm) + START_LEAD*this.el.playbackRate;
+  }
+  /* hold the lock like a steady hand on the platter: the beat-snap has
+     already landed it, so only whisper-corrections (≤0.5% ≈ 8 cents —
+     inaudible) guard against slow drift. Knocked far off (a scrub, a deck
+     joining late)? Snap again rather than glide. No time-stretcher, no
+     constant warble: just clean resampled audio. */
   phaseHold(other,baseRate){
     clearInterval(this._chase);
     const frac=x=>((x%1)+1)%1;
-    let locked=false;
+    let locked=false, wasBoth=this.playing&&other.playing;
     this._chase=setInterval(()=>{
       if(!this.track||!this.synced){
         clearInterval(this._chase);this._chase=null;return;
       }
-      if(!(this.playing&&other.playing)){this.el.playbackRate=baseRate;return;}
+      if(!(this.playing&&other.playing)){wasBoth=false;this.el.playbackRate=baseRate;return;}
+      if(!wasBoth){wasBoth=true;this.snapPhase(other);return;}  /* deck just joined */
       let d=frac(other.beatPos())-frac(this.beatPos());
       if(d>0.5)d-=1; if(d<-0.5)d+=1;
+      if(Math.abs(d)>0.1){this.snapPhase(other);return;}
       if(Math.abs(d)<0.006){locked=true;this.el.playbackRate=baseRate;return;}
       const cap=locked?0.005:0.02;
       const bend=Math.max(-cap,Math.min(cap,d*0.8));
@@ -1229,9 +1246,9 @@ const ui={
     const S=d.key.toUpperCase(), t=d.track;
     if(!t){$('bpm'+S).textContent='—';return;}
     if(t.bpm){
-      $('bpm'+S).textContent=(t.bpm*d.el.playbackRate).toFixed(1);
+      $('bpm'+S).textContent=(t.bpm*d.rate).toFixed(1);
       $('bpmNote'+S).innerHTML=d.synced?'BPM · <b style="color:var(--moss)">SYNCED</b>'
-        :(d.el.playbackRate!==1?'BPM · RETUNED':'BPM · DETECTED');
+        :(d.rate!==1?'BPM · RETUNED':'BPM · DETECTED');
     }else{
       $('bpm'+S).textContent='—';
       $('bpmNote'+S).innerHTML='<span class="warn">NO STABLE BEAT FOUND</span>';
@@ -1246,7 +1263,7 @@ const ui={
     this.refreshBpm(d);
     const S=d.key.toUpperCase();
     /* reflect the synced rate on the pitch fader */
-    const pct=(d.el.playbackRate-1)*100;
+    const pct=(d.rate-1)*100;
     $('pitchSl'+S).value=pct;
     $('pitch'+S).textContent=(pct>=0?'+':'')+pct.toFixed(1)+'%';
     const btn=$('sync'+S);

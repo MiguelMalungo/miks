@@ -397,11 +397,12 @@
     footer{display:none}
     body{padding-bottom:50px}
     .eq{display:none}
-    .center{gap:10px;padding:6px 10px}
-    .center .xf{order:-1}
+    .center{gap:12px;padding:6px 10px;justify-content:center}
     .center .xf .label{display:none}          /* drop the word BLEND */
-    /* white logo below the crossfade, small enough to shift nothing */
-    .mixlogo{display:block;order:0;width:auto;height:26px;margin:2px auto 0;opacity:.9}
+    /* stack, top → bottom: logo, volume, crossfade */
+    .mixlogo{display:block;order:1;width:auto;height:65px;margin:0 auto;opacity:.92}
+    .vu{order:2}
+    .center .xf{order:3}
   }
 </style>
 </head>

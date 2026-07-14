@@ -15,14 +15,20 @@
   }
   *{margin:0;padding:0;box-sizing:border-box}
   html,body{min-height:100%}
-  body{
-    background:
-      radial-gradient(ellipse 70% 50% at 16% 18%, rgba(201,85,46,.09), transparent 62%),
-      radial-gradient(ellipse 55% 60% at 85% 80%, rgba(224,159,62,.07), transparent 62%),
-      var(--coffee);
-    color:var(--bone);font-family:'Sora',sans-serif;overflow-x:hidden;
+  body{background:var(--coffee);color:var(--bone);font-family:'Sora',sans-serif;overflow-x:hidden}
+  /* artwork backdrop — home-style fog: heavy blur, sharpens under the cursor */
+  #bg{position:fixed;inset:0;z-index:0;overflow:hidden;background:#0d0906}
+  .imglayer{position:absolute;inset:-2%;background:url('media/contact.jpg') center/cover no-repeat}
+  #imgFog{filter:blur(46px) brightness(.42) saturate(1.2)}
+  #imgFocus{
+    filter:blur(15px) brightness(.62) saturate(1.28);
+    -webkit-mask-image:radial-gradient(circle var(--fr,270px) at var(--fx,-999px) var(--fy,-999px),
+      rgba(0,0,0,.95) 0%, rgba(0,0,0,.5) 48%, transparent 74%);
+    mask-image:radial-gradient(circle var(--fr,270px) at var(--fx,-999px) var(--fy,-999px),
+      rgba(0,0,0,.95) 0%, rgba(0,0,0,.5) 48%, transparent 74%);
   }
-  #dust{position:fixed;inset:0;z-index:0;pointer-events:none}
+  #bg::after{content:"";position:absolute;inset:0;
+    background:radial-gradient(ellipse 120% 100% at 50% 42%, transparent 50%, rgba(10,6,3,.8))}
   header,main,footer{position:relative;z-index:2}
 
   header{display:flex;justify-content:center;align-items:center;position:relative;padding:24px 42px 16px}
@@ -91,7 +97,10 @@
 </head>
 <body>
 
-<canvas id="dust"></canvas>
+<div id="bg">
+  <div class="imglayer" id="imgFog"></div>
+  <div class="imglayer" id="imgFocus"></div>
+</div>
 
 <header>
   <a class="brand" href="index.html" aria-label="MiKS home"><img src="media/logo.png" alt="MiKS"></a>
@@ -136,59 +145,17 @@
 
 <footer><span class="m">© MiKS · all blends live · all rights reserved</span></footer>
 
-<script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
 <script>
-/* ═══ gold ember dust — three.js (same family as the projects page) ═══ */
+/* ═══ artwork fog — the focus circle follows the cursor ═══ */
 (function(){
-  if(!window.THREE)return;
-  const canvas=document.getElementById('dust');
-  const renderer=new THREE.WebGLRenderer({canvas,alpha:true,antialias:false});
-  renderer.setPixelRatio(Math.min(devicePixelRatio||1,2));
-  const scene=new THREE.Scene();
-  const cam=new THREE.PerspectiveCamera(55,1,.1,100); cam.position.z=22;
-  /* soft round ember sprite */
-  const sc=document.createElement('canvas');sc.width=sc.height=64;
-  const sg=sc.getContext('2d');
-  const grd=sg.createRadialGradient(32,32,0,32,32,32);
-  grd.addColorStop(0,'rgba(255,255,255,1)');
-  grd.addColorStop(.4,'rgba(255,255,255,.55)');
-  grd.addColorStop(1,'rgba(255,255,255,0)');
-  sg.fillStyle=grd;sg.fillRect(0,0,64,64);
-  const sprite=new THREE.CanvasTexture(sc);
-
-  const N=750;
-  const pos=new Float32Array(N*3), seed=new Float32Array(N);
-  for(let i=0;i<N;i++){
-    pos[i*3]=(Math.random()-.5)*46; pos[i*3+1]=(Math.random()-.5)*30; pos[i*3+2]=(Math.random()-.5)*18;
-    seed[i]=Math.random()*100;
-  }
-  const geo=new THREE.BufferGeometry();
-  geo.setAttribute('position',new THREE.BufferAttribute(pos,3));
-  scene.add(new THREE.Points(geo,new THREE.PointsMaterial({
-    color:0xf3c969,size:.34,map:sprite,alphaTest:.01,transparent:true,opacity:.5,
-    blending:THREE.AdditiveBlending,depthWrite:false})));
-  function resize(){renderer.setSize(innerWidth,innerHeight,false);
-    cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix();}
-  resize();addEventListener('resize',resize);
-  let mx=0,my=0;
-  addEventListener('pointermove',e=>{mx=e.clientX/innerWidth*2-1;my=e.clientY/innerHeight*2-1;});
-  (function frame(ts){
-    const t=(ts||0)*0.001;
-    const a=geo.attributes.position.array;
-    for(let i=0;i<N;i++){
-      const s=seed[i];
-      a[i*3]+=Math.sin(t*.3+s)*0.004;
-      a[i*3+1]+=0.006+Math.sin(s)*0.002;
-      if(a[i*3+1]>16)a[i*3+1]=-16;
-    }
-    geo.attributes.position.needsUpdate=true;
-    cam.position.x+=(mx*1.6-cam.position.x)*0.03;
-    cam.position.y+=(-my*1.0-cam.position.y)*0.03;
-    cam.lookAt(0,0,0);
-    renderer.render(scene,cam);
-    requestAnimationFrame(frame);
-  })();
+  const foc=document.getElementById('imgFocus');
+  let tx=-999,ty=-999,cx=-999,cy=-999;
+  addEventListener('pointermove',e=>{tx=e.clientX;ty=e.clientY;});
+  (function loop(){cx+=(tx-cx)*.14;cy+=(ty-cy)*.14;
+    foc.style.setProperty('--fx',cx.toFixed(1)+'px');
+    foc.style.setProperty('--fy',cy.toFixed(1)+'px');
+    requestAnimationFrame(loop);})();
 })();
 
 /* ═══ the email as an ink swarm — carve it, click to write ═══ */

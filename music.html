@@ -65,8 +65,15 @@
   footer .m{font-family:'IBM Plex Mono';font-size:9px;letter-spacing:.28em;color:var(--mist);text-transform:uppercase}
 
   @media (max-width:700px){
-    nav{display:none}
-    .stage{height:calc(100vh - 70px)}
+    header{position:fixed;left:0;right:0;bottom:0;top:auto;justify-content:center;
+      padding:8px 16px;background:rgba(18,12,7,.93);backdrop-filter:blur(10px);
+      border-top:1px solid var(--hair-dim);z-index:60}
+    .brand{left:16px}
+    .brand img{height:22px}
+    nav{gap:12px;margin-left:52px}
+    nav a{font-size:8px;letter-spacing:.1em}
+    footer{display:none}
+    .stage{height:calc(100vh - 56px)}
     .orb{width:min(40vh,330px)}
   }
 </style>

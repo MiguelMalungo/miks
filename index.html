@@ -618,19 +618,96 @@ let AC=null;
 function ctx(){ if(!AC){AC=new (window.AudioContext||window.webkitAudioContext)();}
   if(AC.state==='suspended')AC.resume(); return AC; }
 
+/* Playback runs on AudioBufferSourceNodes, not <audio> elements: on iOS
+   Safari every playbackRate change on a media element interrupts the audio
+   pipeline (audible stutter) and its clock is too coarse to phase-lock
+   against. Buffer sources resample seamlessly (vinyl mode: pitch moves with
+   tempo) and the AudioContext clock is sample-accurate, so SYNC can hold a
+   beat lock without artifacts. Mimics the HTMLMediaElement API the UI uses. */
+class BufferPlayer extends EventTarget{
+  constructor(){
+    super();
+    this.out=ctx().createGain();
+    this.buffer=null; this.duration=0;
+    this._rate=1; this._offset=0; this._t0=0;
+    this._src=null; this._playing=false; this._pendingPlay=false; this._loadId=0;
+  }
+  async setTrack(track){
+    const id=++this._loadId;
+    this._stopSrc(); this._playing=false; this._pendingPlay=false;
+    this._offset=0; this.buffer=null; this.duration=track.duration||0;
+    try{
+      const ab=track.file ? await track.file.arrayBuffer()
+                          : await (await fetch(track.url)).arrayBuffer();
+      const buf=await ctx().decodeAudioData(ab);
+      if(id!==this._loadId)return;           /* another track was loaded since */
+      this.buffer=buf; this.duration=buf.duration;
+      if(this._pendingPlay){this._pendingPlay=false;this.play();}
+    }catch(e){ if(id===this._loadId)toast('Could not load audio — '+e.message); }
+  }
+  get paused(){return !this._playing;}
+  get playbackRate(){return this._rate;}
+  set playbackRate(r){
+    if(this._playing){
+      /* snapshot position under the old rate so currentTime stays exact */
+      this._offset=this.currentTime; this._t0=ctx().currentTime;
+      this._src.playbackRate.setValueAtTime(r,0);
+    }
+    this._rate=r;
+  }
+  get currentTime(){
+    return this._playing ? this._offset+(ctx().currentTime-this._t0)*this._rate
+                         : this._offset;
+  }
+  set currentTime(t){
+    t=Math.max(0,Math.min(this.duration||0,t));
+    if(this._playing)this._startSrc(t); else this._offset=t;
+  }
+  play(){
+    if(this._playing)return Promise.resolve();
+    if(!this.buffer){this._pendingPlay=true;return Promise.resolve();} /* still decoding */
+    ctx();
+    this._startSrc(Math.min(this._offset,Math.max(0,this.duration-0.05)));
+    this._playing=true;
+    this.dispatchEvent(new Event('play'));
+    return Promise.resolve();
+  }
+  pause(){
+    this._pendingPlay=false;
+    if(!this._playing)return;
+    this._offset=this.currentTime; this._stopSrc(); this._playing=false;
+    this.dispatchEvent(new Event('pause'));
+  }
+  _startSrc(at){
+    this._stopSrc();
+    const c=ctx(), s=c.createBufferSource();
+    s.buffer=this.buffer; s.playbackRate.value=this._rate;
+    s.connect(this.out);
+    this._offset=at; this._t0=c.currentTime;
+    s.onended=()=>{                          /* natural end only — seeks/stops detach first */
+      if(s!==this._src)return;
+      this._src=null; this._playing=false; this._offset=this.duration;
+      this.dispatchEvent(new Event('ended'));
+    };
+    s.start(0,Math.min(at,Math.max(0,this.buffer.duration-0.01)));
+    this._src=s;
+  }
+  _stopSrc(){
+    const s=this._src; this._src=null;
+    if(s){s.onended=null; try{s.stop();}catch(e){} try{s.disconnect();}catch(e){}}
+  }
+}
+
 class Deck{
   constructor(key){
     this.key=key; this.track=null; this.rate=1; this.loopBeats=0;
-    /* vinyl mode: rate changes resample (pitch moves with tempo) — clean,
-       artifact-free audio. The browser's time-stretcher smears transients,
-       so it stays OFF. At rate 1.0 playback is untouched either way. */
-    this.el=new Audio(); this.el.preservesPitch=false; this.el.webkitPreservesPitch=false;
+    this.el=new BufferPlayer();
     this.nodes=null; this.synced=false;
   }
   ensureGraph(){
     if(this.nodes)return;
     const c=ctx();
-    const src=c.createMediaElementSource(this.el);
+    const src=this.el.out;
     const low=c.createBiquadFilter(); low.type='lowshelf'; low.frequency.value=200;
     const mid=c.createBiquadFilter(); mid.type='peaking'; mid.frequency.value=1000; mid.Q.value=0.9;
     const high=c.createBiquadFilter(); high.type='highshelf'; high.frequency.value=4000;
@@ -646,7 +723,7 @@ class Deck{
     clearInterval(this._chase);this._chase=null;
     this.stop();
     this.track=track; this.rate=1; this.synced=false; this.loopBeats=0; this.loopStart=0;
-    this.el.src=track.url; this.el.playbackRate=1;
+    this.el.setTrack(track); this.el.playbackRate=1;
     ui.onLoad(this);
   }
   get playing(){return this.track&&!this.el.paused;}
@@ -884,7 +961,7 @@ async function addFiles(_side,files){
       toast('Could not decode "'+name+'" — '+e.message);continue;
     }
     const track={
-      name,url,duration:buf.duration,peaks:makePeaks(buf),
+      name,url,file,duration:buf.duration,peaks:makePeaks(buf),
       genre:'AFRO HOUSE',
       bpm:beats?beats.bpm:null, offset:beats?beats.offset:0,
       confidence:beats?beats.confidence:0

@@ -946,7 +946,101 @@ function detectBeats(buf){
       }
     }
   }
-  return {bpm:+bpm.toFixed(3), offset:+(bestOff*0.01).toFixed(3), confidence:+confidence.toFixed(2)};
+  /* ── full-track lock ──────────────────────────────────────────────
+     Everything above sees only the first 100s at 10ms hops. Fitting a
+     tempo there and extrapolating it across a 7-minute track turns a
+     hairline slope error into tens of ms of drift — decks that measure
+     "locked" on their own grids but audibly wash apart. So re-fit the
+     period against real onsets over the WHOLE track at 2ms: the long
+     lever arm plus finer hops pins the tempo ~20x tighter. */
+  const fine=refineGrid(ch,sr,60/bpm,bestOff*0.01);
+  if(fine){ bpm=60/fine.period; bestOff=fine.offset/0.01; }
+  return {bpm:+bpm.toFixed(4), offset:+(bestOff*0.01).toFixed(4), confidence:+confidence.toFixed(2)};
+}
+
+/* Precise period + phase over the whole track.
+
+   Period comes from autocorrelating the onset envelope at a lag of MANY
+   beats: if the correlation peak at ~N beats is located to ±1ms, the
+   per-beat period inherits only 1/N of that error. Walking N up in stages
+   (each stage's sharper estimate keeps the next, longer lag unambiguous)
+   pins the tempo far tighter than fitting selected peaks — and unlike
+   peak-snapping it weighs every onset equally, so nothing biases the slope.
+   Phase then comes from a comb sum over the full track. */
+const GRID_HOP=0.004;                              /* 4ms analysis frames (nominal) */
+/* Returns the envelope plus the frame duration it was ACTUALLY built with:
+   the hop is a whole number of samples, so at 44.1kHz a nominal 4ms is really
+   176/44100 = 3.9909ms. Converting frames to seconds with the nominal value
+   scales every period by 1.0023 — a silent 0.23% tempo error on every track. */
+function onsetEnvelope(ch,sr,hopSec){
+  const HOP=Math.max(1,Math.round(sr*hopSec));
+  const dt=HOP/sr;                                 /* true seconds per frame */
+  const frames=Math.floor(ch.length/HOP)-1;
+  if(frames<500)return null;
+  const env=new Float32Array(frames);
+  for(let f=0;f<frames;f++){
+    let e=0;const i0=f*HOP;
+    for(let i=0;i<HOP;i+=2){const v=(ch[i0+i]+ch[i0+i+1])*0.5;e+=v*v;}
+    env[f]=Math.sqrt(e/(HOP/2));
+  }
+  const on=new Float32Array(frames);
+  for(let f=1;f<frames;f++){const d=env[f]-env[f-1];on[f]=d>0?d:0;}
+  let mx=0;for(let f=0;f<frames;f++)if(on[f]>mx)mx=on[f];
+  if(mx<=0)return null;
+  for(let f=0;f<frames;f++)on[f]/=mx;
+  return {on, dt};
+}
+function refineGrid(ch,sr,period0,offset0){
+  const e=onsetEnvelope(ch,sr,GRID_HOP);
+  if(!e)return null;
+  const on=e.on, dt=e.dt;
+  const frames=on.length, dur=frames*dt;
+  const corr=L=>{                                  /* unnormalized, fixed span */
+    const n=frames-L; if(n<100)return -1;
+    let s=0; for(let f=0;f<n;f++)s+=on[f]*on[f+L];
+    return s/n;
+  };
+  let period=period0;
+  /* lag spans: each stage must stay within half a beat of truth, which the
+     previous stage's precision guarantees */
+  for(const span of [15,45,110,220,420]){
+    if(span>dur*0.75)break;                        /* still ≥25% overlap to correlate */
+    const N=Math.round(span/period);
+    if(N<8)continue;
+    const centre=N*period/dt;
+    const half=Math.max(3,Math.round(0.4*period/dt));
+    const lo=Math.max(1,Math.round(centre-half)), hi=Math.round(centre+half);
+    if(hi>=frames-100)break;
+    let best=-1,bestL=-1;
+    for(let L=lo;L<=hi;L++){const c=corr(L); if(c>best){best=c;bestL=L;}}
+    if(bestL<lo+1||bestL>hi-1)break;               /* peak hit the edge — stop */
+    const y0=corr(bestL-1),y1=best,y2=corr(bestL+1);
+    let L=bestL; const den=y0-2*y1+y2;
+    if(den!==0){const d=0.5*(y0-y2)/den; if(Math.abs(d)<1)L=bestL+d;}
+    const p=L*dt/N;
+    if(!(p>period0*0.97&&p<period0*1.03))break;    /* never change tempo class */
+    period=p;
+  }
+  /* phase: comb sum across the whole track, then parabolic refine */
+  const combAt=off=>{
+    let s=0,n=0;
+    for(let k=0;;k++){
+      const f=Math.round((off+k*period)/dt);
+      if(f>=frames-1)break;
+      if(f>=1){s+=on[f]+(on[f-1]+on[f+1])*0.5;n++;}
+    }
+    return n?s/n:-1;
+  };
+  const step=dt, steps=Math.max(2,Math.round(period/step));
+  let bo=0,bs=-1;
+  for(let i=0;i<steps;i++){const o=i*step, v=combAt(o); if(v>bs){bs=v;bo=o;}}
+  const c0=combAt(bo-step), c2=combAt(bo+step), dn=c0-2*bs+c2;
+  if(dn!==0){const d=0.5*(c0-c2)/dn; if(Math.abs(d)<1)bo+=d*step;}
+  let offset=bo;
+  /* keep the grid near the original phase reference */
+  while(offset<0)offset+=period;
+  offset%=period;
+  return {period, offset};
 }
 
 /* waveform peaks for the scroller */

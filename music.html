@@ -50,9 +50,9 @@
     display:flex;flex-direction:column;align-items:center;justify-content:center;
     height:calc(100vh - 92px);gap:0;
   }
-  .orb{position:relative;width:min(46vh,440px);aspect-ratio:1}
+  .orb{position:relative;width:min(86vh,88vw,860px);aspect-ratio:1}
   #blob{position:absolute;inset:-55%;width:210%;height:210%;cursor:pointer}
-  .cue{text-align:center;margin-top:-2vh;pointer-events:none;user-select:none}
+  .cue{text-align:center;margin-top:-11vh;pointer-events:none;user-select:none}
   .cue .k{font-family:'IBM Plex Mono';font-size:10px;letter-spacing:.42em;color:var(--gold);text-transform:uppercase}
   .cue h3{
     font-weight:200;font-size:clamp(34px,5vw,60px);letter-spacing:.01em;margin-top:8px;line-height:1;
@@ -74,7 +74,7 @@
     nav a{font-size:8px;letter-spacing:.1em}
     footer{display:none}
     .stage{height:calc(100vh - 56px)}
-    .orb{width:min(40vh,330px)}
+    .orb{width:min(74vh,92vw,600px)}
   }
 </style>
 </head>
@@ -165,74 +165,208 @@ addEventListener('pointermove',e=>{tx=e.clientX;ty=e.clientY;});
     v.style.setProperty('--fx',cx.toFixed(1)+'px'); v.style.setProperty('--fy',cy.toFixed(1)+'px');});
   requestAnimationFrame(loop);})();
 
-/* ═══ three.js noise-displaced blob (reused from the mixer) ═══ */
-const simplex=(function(){
-  const grad=[[1,1,0],[-1,1,0],[1,-1,0],[-1,-1,0],[1,0,1],[-1,0,1],[1,0,-1],[-1,0,-1],[0,1,1],[0,-1,1],[0,1,-1],[0,-1,-1]];
-  const p=new Uint8Array(256);let seed=1337;
-  for(let i=0;i<256;i++)p[i]=i;
-  for(let i=255;i>0;i--){seed=(seed*16807)%2147483647;const j=seed%(i+1);const t=p[i];p[i]=p[j];p[j]=t;}
-  const perm=new Uint8Array(512);for(let i=0;i<512;i++)perm[i]=p[i&255];
-  const F3=1/3,G3=1/6;
-  return function(x,y,z){
-    const s=(x+y+z)*F3,i=Math.floor(x+s),j=Math.floor(y+s),k=Math.floor(z+s),t=(i+j+k)*G3;
-    const x0=x-(i-t),y0=y-(j-t),z0=z-(k-t);let i1,j1,k1,i2,j2,k2;
-    if(x0>=y0){if(y0>=z0){i1=1;j1=0;k1=0;i2=1;j2=1;k2=0;}else if(x0>=z0){i1=1;j1=0;k1=0;i2=1;j2=0;k2=1;}else{i1=0;j1=0;k1=1;i2=1;j2=0;k2=1;}}
-    else{if(y0<z0){i1=0;j1=0;k1=1;i2=0;j2=1;k2=1;}else if(x0<z0){i1=0;j1=1;k1=0;i2=0;j2=1;k2=1;}else{i1=0;j1=1;k1=0;i2=1;j2=1;k2=0;}}
-    const x1=x0-i1+G3,y1=y0-j1+G3,z1=z0-k1+G3,x2=x0-i2+2*G3,y2=y0-j2+2*G3,z2=z0-k2+2*G3,x3=x0-1+3*G3,y3=y0-1+3*G3,z3=z0-1+3*G3;
-    const ii=i&255,jj=j&255,kk=k&255;let n=0,t0=.6-x0*x0-y0*y0-z0*z0;
-    if(t0>0){const g=grad[perm[ii+perm[jj+perm[kk]]]%12];t0*=t0;n+=t0*t0*(g[0]*x0+g[1]*y0+g[2]*z0);}
-    let t1=.6-x1*x1-y1*y1-z1*z1;if(t1>0){const g=grad[perm[ii+i1+perm[jj+j1+perm[kk+k1]]]%12];t1*=t1;n+=t1*t1*(g[0]*x1+g[1]*y1+g[2]*z1);}
-    let t2=.6-x2*x2-y2*y2-z2*z2;if(t2>0){const g=grad[perm[ii+i2+perm[jj+j2+perm[kk+k2]]]%12];t2*=t2;n+=t2*t2*(g[0]*x2+g[1]*y2+g[2]*z2);}
-    let t3=.6-x3*x3-y3*y3-z3*z3;if(t3>0){const g=grad[perm[ii+1+perm[jj+1+perm[kk+1]]]%12];t3*=t3;n+=t3*t3*(g[0]*x3+g[1]*y3+g[2]*z3);}
-    return 32*n;
-  };
-})();
-
+/* ═══ particle orb — a shell of points that breathes, collapses and
+   scatters with the music and the cursor. The displacement runs in the
+   vertex shader so ~45k points stay at 60fps; the palette is the same
+   per-release tone the mesh blob used. ═══ */
 const canvas=document.getElementById('blob');
 let engine=null;
 if(window.THREE){
-  const renderer=new THREE.WebGLRenderer({canvas,alpha:true,antialias:true});
-  renderer.setPixelRatio(Math.min(devicePixelRatio||1,2));
+  const SMALL=Math.min(innerWidth,innerHeight)<700||/Mobi|Android/i.test(navigator.userAgent);
+  const ROWS=SMALL?140:215, COLS=SMALL?190:325, N=ROWS*COLS;
+
+  const renderer=new THREE.WebGLRenderer({canvas,alpha:true,antialias:false});
+  const PIX=Math.min(devicePixelRatio||1,2);
+  renderer.setPixelRatio(PIX);
+  renderer.setClearColor(0x000000,0);
   const scene=new THREE.Scene();
   const cam=new THREE.PerspectiveCamera(42,1,.1,14); cam.position.z=7;
-  const geo=new THREE.SphereGeometry(1,96,64);
-  const base=geo.attributes.position.array.slice();
-  const mat=new THREE.MeshStandardMaterial({color:0xc9a233,roughness:.32,metalness:.22,emissive:0x4a3a08,emissiveIntensity:.5});
-  const mesh=new THREE.Mesh(geo,mat); scene.add(mesh);
-  scene.add(new THREE.AmbientLight(0x4a4020,2.2));
-  const l1=new THREE.PointLight(0xfff3cf,55); l1.position.set(3,2.8,4); scene.add(l1);
-  const l2=new THREE.PointLight(0xc9a233,32); l2.position.set(-3.2,-2,3); scene.add(l2);
-  const cur={main:new THREE.Color(0xc9a233),emis:new THREE.Color(0x4a3a08),l1:new THREE.Color(0xfff3cf),l2:new THREE.Color(0xc9a233)};
-  const tgt={main:new THREE.Color(0xc9a233),emis:new THREE.Color(0x4a3a08),l1:new THREE.Color(0xfff3cf),l2:new THREE.Color(0xc9a233)};
-  let hover=0,hT=0,mx=0,my=0,exc=0,level=0;
+
+  /* equal-area lat/long shell: rings stay legible (the striations you see
+     when the noise is calm) but the poles don't clump */
+  const pos=new Float32Array(N*3), rnd=new Float32Array(N), shell=new Float32Array(N);
+  let k=0;
+  for(let r=0;r<ROWS;r++){
+    const y=1-2*(r+0.5)/ROWS, rad=Math.sqrt(Math.max(0,1-y*y));
+    const off=(r&1)*(Math.PI/COLS);
+    for(let c=0;c<COLS;c++){
+      const phi=(c/COLS)*Math.PI*2+off;
+      pos[k*3]=Math.cos(phi)*rad; pos[k*3+1]=y; pos[k*3+2]=Math.sin(phi)*rad;
+      rnd[k]=Math.random(); shell[k]=Math.random();
+      k++;
+    }
+  }
+  const geo=new THREE.BufferGeometry();
+  geo.setAttribute('position',new THREE.BufferAttribute(pos,3));
+  geo.setAttribute('aRand',new THREE.BufferAttribute(rnd,1));
+  geo.setAttribute('aShell',new THREE.BufferAttribute(shell,1));
+
+  const NOISE=`
+    vec3 mod289(vec3 x){return x-floor(x*(1.0/289.0))*289.0;}
+    vec4 mod289(vec4 x){return x-floor(x*(1.0/289.0))*289.0;}
+    vec4 permute(vec4 x){return mod289(((x*34.0)+1.0)*x);}
+    vec4 taylorInvSqrt(vec4 r){return 1.79284291400159-0.85373472095314*r;}
+    float snoise(vec3 v){
+      const vec2 C=vec2(1.0/6.0,1.0/3.0);
+      const vec4 D=vec4(0.0,0.5,1.0,2.0);
+      vec3 i=floor(v+dot(v,C.yyy));
+      vec3 x0=v-i+dot(i,C.xxx);
+      vec3 g=step(x0.yzx,x0.xyz);
+      vec3 l=1.0-g;
+      vec3 i1=min(g.xyz,l.zxy);
+      vec3 i2=max(g.xyz,l.zxy);
+      vec3 x1=x0-i1+C.xxx;
+      vec3 x2=x0-i2+C.yyy;
+      vec3 x3=x0-D.yyy;
+      i=mod289(i);
+      vec4 p=permute(permute(permute(
+          i.z+vec4(0.0,i1.z,i2.z,1.0))
+        + i.y+vec4(0.0,i1.y,i2.y,1.0))
+        + i.x+vec4(0.0,i1.x,i2.x,1.0));
+      float n_=0.142857142857;
+      vec3 ns=n_*D.wyz-D.xzx;
+      vec4 j=p-49.0*floor(p*ns.z*ns.z);
+      vec4 x_=floor(j*ns.z);
+      vec4 y_=floor(j-7.0*x_);
+      vec4 x=x_*ns.x+ns.yyyy;
+      vec4 y=y_*ns.x+ns.yyyy;
+      vec4 h=1.0-abs(x)-abs(y);
+      vec4 b0=vec4(x.xy,y.xy);
+      vec4 b1=vec4(x.zw,y.zw);
+      vec4 s0=floor(b0)*2.0+1.0;
+      vec4 s1=floor(b1)*2.0+1.0;
+      vec4 sh=-step(h,vec4(0.0));
+      vec4 a0=b0.xzyw+s0.xzyw*sh.xxyy;
+      vec4 a1=b1.xzyw+s1.xzyw*sh.zzww;
+      vec3 p0=vec3(a0.xy,h.x);
+      vec3 p1=vec3(a0.zw,h.y);
+      vec3 p2=vec3(a1.xy,h.z);
+      vec3 p3=vec3(a1.zw,h.w);
+      vec4 norm=taylorInvSqrt(vec4(dot(p0,p0),dot(p1,p1),dot(p2,p2),dot(p3,p3)));
+      p0*=norm.x;p1*=norm.y;p2*=norm.z;p3*=norm.w;
+      vec4 m=max(0.6-vec4(dot(x0,x0),dot(x1,x1),dot(x2,x2),dot(x3,x3)),0.0);
+      m=m*m;
+      return 42.0*dot(m*m,vec4(dot(p0,x0),dot(p1,x1),dot(p2,x2),dot(p3,x3)));
+    }
+    float fbm(vec3 p){
+      /* two wide octaves — big rounded lobes, none of the fine filament fizz */
+      return snoise(p)*0.72+snoise(p*2.03)*0.28;
+    }`;
+
+  const uni={
+    uTime:{value:0}, uSpeed:{value:0.4}, uAmp:{value:0.1}, uSuction:{value:0.22},
+    uLevel:{value:0}, uBass:{value:0}, uHigh:{value:0},
+    uHover:{value:0}, uExc:{value:0}, uPtr:{value:new THREE.Vector3(0,0,1)},
+    uSize:{value:SMALL?7.5:8.5}, uPix:{value:PIX},
+    uColA:{value:new THREE.Color(0xc9a233)}, uColB:{value:new THREE.Color(0xfff3cf)}
+  };
+
+  const mat=new THREE.ShaderMaterial({
+    uniforms:uni, transparent:true, depthWrite:false,
+    blending:THREE.AdditiveBlending,
+    vertexShader:NOISE+`
+      uniform float uTime,uSpeed,uAmp,uSuction,uLevel,uBass,uHigh,uHover,uExc,uSize,uPix;
+      uniform vec3 uPtr;
+      attribute float aRand;
+      attribute float aShell;
+      varying float vGlow;
+      void main(){
+        vec3 dir=normalize(position);
+        float t=uTime*uSpeed;
+        float n=fbm(dir*1.45+vec3(0.0,t*0.5,t*0.3));
+        /* suction hollows the shell where the noise dips — kept shallow so the
+           clusters stay round instead of tearing into wisps */
+        float suck=uSuction*smoothstep(0.15,-0.75,n);
+        float amp=uAmp*(0.6+uBass*0.5);
+        float r=1.0+amp*n-suck*0.45+aShell*0.05;
+        /* the cursor pushes a bulge out of the surface */
+        float d=dot(dir,uPtr);
+        float bulge=smoothstep(0.45,1.0,d)*uHover*(0.20+uExc*0.55);
+        r+=bulge;
+        /* the music breathes the whole shell in and out — a uniform scale, so
+           it stays spherical however loud it gets. Highs only brighten now;
+           driving them into the geometry is what made it fizz. */
+        r*=1.0+uLevel*0.16;
+        vec3 p=dir*r;
+        vGlow=clamp(0.3+n*0.5+bulge*2.0+uLevel*0.5+uHigh*0.35,0.0,1.7);
+        vec4 mv=modelViewMatrix*vec4(p,1.0);
+        gl_Position=projectionMatrix*mv;
+        gl_PointSize=uSize*uPix*(0.55+aRand*0.75)/max(0.35,-mv.z);
+      }`,
+    fragmentShader:`
+      precision mediump float;
+      uniform vec3 uColA,uColB;
+      varying float vGlow;
+      void main(){
+        vec2 c=gl_PointCoord-0.5;
+        float d2=dot(c,c);
+        if(d2>0.25)discard;
+        float a=smoothstep(0.25,0.02,d2);
+        vec3 col=mix(uColA,uColB,clamp(vGlow*0.55,0.0,1.0));
+        gl_FragColor=vec4(col,a*(0.22+vGlow*0.55));
+      }`
+  });
+
+  const pts=new THREE.Points(geo,mat); scene.add(pts);
+
+  const tgtA=new THREE.Color(0xc9a233), tgtB=new THREE.Color(0xfff3cf);
+  let hover=0,hT=0,mx=0,my=0,exc=0;
+  let level=0,bass=0,mid=0,high=0;          /* smoothed audio */
+  let lvT=0,bsT=0,mdT=0,hiT=0;              /* raw targets */
+
   canvas.addEventListener('pointerenter',()=>hT=1);
   canvas.addEventListener('pointerleave',()=>hT=0);
-  canvas.addEventListener('pointermove',e=>{const r=canvas.getBoundingClientRect();
-    const nx=(e.clientX-r.left)/r.width*2-1,ny=-((e.clientY-r.top)/r.height*2-1);
-    exc=Math.min(1,exc+Math.hypot(nx-mx,ny-my)*1.4);mx=nx;my=ny;});
-  function resize(){const r=canvas.parentElement.getBoundingClientRect();
-    renderer.setSize(Math.max(2,r.width),Math.max(2,r.height),false);}
-  resize();addEventListener('resize',resize);
-  const pos=geo.attributes.position,v=new THREE.Vector3(),mdir=new THREE.Vector3(),q=new THREE.Quaternion();
+  canvas.addEventListener('pointermove',e=>{
+    const r=canvas.getBoundingClientRect();
+    const nx=(e.clientX-r.left)/r.width*2-1, ny=-((e.clientY-r.top)/r.height*2-1);
+    exc=Math.min(1,exc+Math.hypot(nx-mx,ny-my)*1.4); mx=nx; my=ny; hT=1;
+  });
+  canvas.addEventListener('touchmove',e=>{
+    const tch=e.touches[0]; if(!tch)return;
+    const r=canvas.getBoundingClientRect();
+    const nx=(tch.clientX-r.left)/r.width*2-1, ny=-((tch.clientY-r.top)/r.height*2-1);
+    exc=Math.min(1,exc+Math.hypot(nx-mx,ny-my)*1.6); mx=nx; my=ny; hT=1;
+  },{passive:true});
+  canvas.addEventListener('touchend',()=>hT=0);
+
+  function resize(){
+    const r=canvas.parentElement.getBoundingClientRect();
+    const w=Math.max(2,r.width), h=Math.max(2,r.height);
+    renderer.setSize(w,h,false);
+    cam.aspect=w/h; cam.updateProjectionMatrix();
+  }
+  resize(); addEventListener('resize',resize);
+
+  const q=new THREE.Quaternion(), ptr=new THREE.Vector3();
   engine={
-    setTone(t){tgt.main.setHex(t.main);tgt.emis.setHex(t.emis);tgt.l1.setHex(t.l1);tgt.l2.setHex(t.l2);},
-    setLevel(l){level=l;},
+    setTone(t){ tgtA.setHex(t.main); tgtB.setHex(t.l1); },
+    setLevel(l){ lvT=l; },
+    setAudio(l,b,m,h){ lvT=l; bsT=b; mdT=m; hiT=h; },
     frame(t){
-      hover+=(hT-hover)*0.06; exc*=0.955;
-      cur.main.lerp(tgt.main,0.04);cur.emis.lerp(tgt.emis,0.04);cur.l1.lerp(tgt.l1,0.04);cur.l2.lerp(tgt.l2,0.04);
-      mat.color.copy(cur.main); mat.emissive.copy(cur.emis); l1.color.copy(cur.l1); l2.color.copy(cur.l2);
-      const amp=.12+hover*.07+exc*.16+level*.6;
-      q.copy(mesh.quaternion).invert();
-      mdir.set(mx,my,.85).normalize().applyQuaternion(q);
-      for(let i=0;i<pos.count;i++){
-        v.set(base[i*3],base[i*3+1],base[i*3+2]);
-        const n=simplex(v.x*1.4+t*.24,v.y*1.4+t*.16,v.z*1.4);
-        let bump=0;
-        if(hover>.02){const d=v.dot(mdir);if(d>.45){bump=(d-.45)/.55;bump=bump*bump*.5*hover*(.6+exc);}}
-        const s=1+amp*n+bump; pos.setXYZ(i,v.x*s,v.y*s,v.z*s);
-      }
-      pos.needsUpdate=true; geo.computeVertexNormals();
-      mesh.rotation.y=t*(.09-hover*.05); mesh.rotation.x=Math.sin(t*.07)*.14;
+      hover+=(hT-hover)*0.05; exc*=0.965;
+      /* long glides both ways — the shell drifts with the music rather than
+         snapping at every transient, which is what read as erratic */
+      level+=(lvT-level)*(lvT>level?0.10:0.05);
+      bass +=(bsT-bass )*(bsT>bass ?0.12:0.05);
+      mid  +=(mdT-mid  )*(mdT>mid  ?0.08:0.05);
+      high +=(hiT-high )*(hiT>high ?0.10:0.06);
+
+      uni.uColA.value.lerp(tgtA,0.04);
+      uni.uColB.value.lerp(tgtB,0.04);
+
+      uni.uTime.value=t;
+      uni.uSpeed.value=0.30+level*0.18;
+      uni.uAmp.value=0.085+level*0.10+exc*0.22+hover*0.05;
+      uni.uSuction.value=0.20+mid*0.15;
+      uni.uLevel.value=level; uni.uBass.value=bass; uni.uHigh.value=high;
+      uni.uHover.value=hover; uni.uExc.value=exc;
+
+      pts.rotation.y=t*(0.09-hover*0.05);
+      pts.rotation.x=Math.sin(t*0.07)*0.14;
+      q.copy(pts.quaternion).invert();
+      ptr.set(mx,my,0.85).normalize().applyQuaternion(q);
+      uni.uPtr.value.copy(ptr);
+
       renderer.render(scene,cam);
     }
   };
@@ -250,9 +384,18 @@ function ensureGraph(){
   srcNode.connect(analyser); analyser.connect(AC.destination);
   vuData=new Uint8Array(analyser.frequencyBinCount);
   (function lvl(){
-    if(analyser){analyser.getByteFrequencyData(vuData);
-      let s=0;for(let i=0;i<vuData.length;i++)s+=vuData[i];
-      if(engine)engine.setLevel(player.paused?0:s/vuData.length/255);}
+    if(analyser){
+      analyser.getByteFrequencyData(vuData);
+      const n=vuData.length;                       /* 128 bins ~ 172Hz each */
+      const band=(a,b)=>{let t=0;for(let i=a;i<b;i++)t+=vuData[i];return t/(b-a)/255;};
+      let s=0;for(let i=0;i<n;i++)s+=vuData[i];
+      const on=!player.paused;
+      if(engine)engine.setAudio(
+        on?s/n/255:0,                              /* level  */
+        on?band(1,7):0,                            /* bass — drives the burst */
+        on?band(7,30):0,                           /* mid  — drives the suction */
+        on?band(30,Math.min(90,n)):0);             /* highs — fine shimmer */
+    }
     requestAnimationFrame(lvl);
   })();
 }

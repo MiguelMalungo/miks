@@ -16,8 +16,8 @@ const MIKS=window.MIKS=window.MIKS||{};
 /* ───────────────────────── audio context ───────────────────────── */
 let AC=null;
 function ctx(){
-  if(!AC)AC=new (window.AudioContext||window.webkitAudioContext)();
-  if(AC.state==='suspended')AC.resume().catch(()=>{});
+  if(!AC){ AC=new (window.AudioContext||window.webkitAudioContext)(); MIKS.log&&MIKS.log('ctx created · '+AC.state+' · '+AC.sampleRate+'Hz'); }
+  if(AC.state!=='running')AC.resume().catch(e=>MIKS.log&&MIKS.log('resume failed: '+e.message));   /* 'suspended' or Safari's 'interrupted' */
   return AC;
 }
 /* seeks/starts are scheduled this far ahead so they land on an exact context
@@ -36,11 +36,13 @@ MIKS.warn=msg=>console.warn(msg);          /* the page swaps in its toast */
    effect), creates and resumes the context, and plays one silent buffer.
    After that every tap re-resumes a context iOS may have interrupted. */
 const IOS=/iP(hone|ad|od)/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
-let _silent=null;
+let _silent=null, _wantSilent=true;
 function claimSession(){
-  if(navigator.audioSession){ try{navigator.audioSession.type='playback';}catch(e){} return; }
+  if(navigator.audioSession){ try{navigator.audioSession.type='playback';}catch(e){} }
   if(!IOS)return;
-  if(_silent){ if(_silent.paused)_silent.play().catch(()=>{}); return; }   /* first call was before a tap */
+  /* on iOS also keep a silent media element playing: it holds the playback
+     session on every iOS version and gives the lock screen something to show */
+  if(_silent){ if(_silent.paused&&_wantSilent)_silent.play().catch(()=>{}); return; }
   /* 0.2 s of silence as a WAV, looped: Safari treats the page as media playback */
   const sr=8000,n=sr*0.2|0,b=new ArrayBuffer(44+n*2),v=new DataView(b);
   const str=(o,t)=>{for(let i=0;i<t.length;i++)v.setUint8(o+i,t.charCodeAt(i));};
@@ -50,19 +52,30 @@ function claimSession(){
   _silent=document.createElement('audio');
   _silent.src=URL.createObjectURL(new Blob([b],{type:'audio/wav'}));
   _silent.loop=true; _silent.setAttribute('playsinline',''); _silent.volume=0.01;
+  _silent.style.display='none'; _silent.id='miksSession';
+  (document.body||document.documentElement).appendChild(_silent);   /* kept in the DOM so it isn't collected */
   _silent.play().catch(()=>{});
 }
 claimSession();
 let _unlocked=false;
-MIKS.unlock=function(){
+MIKS.unlock=function(ev){
   claimSession();
   const c=ctx();
-  if(c.state!=='running')c.resume().catch(()=>{});
+  if(c.state!=='running')c.resume().then(()=>MIKS.log&&MIKS.log('resumed on '+ev+' · '+c.state)).catch(e=>MIKS.log&&MIKS.log('resume failed: '+e.message));
   if(_unlocked)return;
   _unlocked=true;
-  try{ const s=c.createBufferSource(); s.buffer=c.createBuffer(1,1,22050); s.connect(c.destination); s.start(0); }catch(e){}
+  MIKS.log&&MIKS.log('unlock on '+ev+' · session '+(navigator.audioSession?navigator.audioSession.type:'n/a')+(IOS?' · iOS':''));
+  try{ const s=c.createBufferSource(); s.buffer=c.createBuffer(1,1,22050); s.connect(c.destination); s.start(0); }catch(e){MIKS.log&&MIKS.log('silent buffer failed: '+e.message);}
 };
 MIKS.unlocked=()=>_unlocked;
+MIKS.isIOS=IOS;
+/* keep the silent element in step with the music so lock-screen controls agree */
+MIKS.session=function(playing){
+  _wantSilent=playing;
+  if(!_silent)return;
+  if(playing){ if(_silent.paused)_silent.play().catch(()=>{}); }
+  else _silent.pause();
+};
 
 /* Playback runs on AudioBufferSourceNodes, not <audio> elements: on iOS
    Safari every playbackRate change on a media element interrupts the audio
@@ -595,8 +608,10 @@ class Mixer extends EventTarget{
     try{ if(!(await this.decode(track)))await this.decode(track); }   /* bytes were cached pre-tap */
     catch(e){ MIKS.warn('Could not load '+track.title+' — '+e.message); this.emit('status'); return; }
     if(gen!==this._sel)return;                 /* superseded by a later pick */
-    if(this.playing) this._startTransition(track);
-    else this._coldStart(track);
+    try{
+      if(this.playing) this._startTransition(track);
+      else this._coldStart(track);
+    }catch(e){ MIKS.warn('Playback error — '+e.message); MIKS.log&&MIKS.log('ERR '+e.message+' @ '+((e.stack||'').split('\n')[1]||'')); }
   }
   _coldStart(track){
     this._cancelTransition();

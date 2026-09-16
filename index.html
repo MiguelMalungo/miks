@@ -302,7 +302,27 @@ MIKS.warn=toast;
 const mixer=new MIKS.Mixer({fadeBeats:16,tempoWindow:0.08,autoAdvance:true});
 /* iOS: the first tap anywhere claims the audio session and starts the
    context; every later tap re-resumes it if iOS interrupted it */
-['touchend','click','keydown'].forEach(ev=>addEventListener(ev,()=>MIKS.unlock(),{passive:true}));
+['touchend','click','keydown'].forEach(ev=>addEventListener(ev,()=>MIKS.unlock(ev),{passive:true}));
+
+/* ?debug — a live readout of what the browser is doing with audio */
+if(/[?&]debug/.test(location.search)){
+  const box=document.createElement('pre');
+  box.style.cssText='position:fixed;left:8px;bottom:8px;z-index:200;max-width:92vw;max-height:40vh;overflow:auto;margin:0;padding:8px 10px;background:rgba(0,0,0,.82);color:#9aa06a;font:10px/1.45 ui-monospace,Menlo,monospace;border:1px solid #444;border-radius:6px;white-space:pre-wrap';
+  document.body.appendChild(box);
+  const lines=[];
+  MIKS.log=m=>{lines.push(new Date().toISOString().slice(11,19)+' '+m);if(lines.length>14)lines.shift();};
+  addEventListener('error',e=>MIKS.log('ERR '+e.message+' @'+(e.filename||'').split('/').pop()+':'+e.lineno));
+  addEventListener('unhandledrejection',e=>MIKS.log('REJ '+(e.reason&&e.reason.message||e.reason)));
+  MIKS.log('ua '+navigator.userAgent.replace(/Mozilla\/5.0 /,'').slice(0,90));
+  MIKS.log('audioSession '+(navigator.audioSession?navigator.audioSession.type:'n/a')+' · iOS '+MIKS.isIOS+' · webgl '+!!document.createElement('canvas').getContext('webgl2'));
+  setInterval(()=>{
+    const m=mixer, a=MIKS.hasCtx()&&m.live?MIKS.master().audio():null;
+    box.textContent='ctx '+MIKS.ctxState()+' · unlocked '+MIKS.unlocked()+' · playing '+m.playing+' · vol '+$('vol').value+'%\n'+
+      'level '+(a?a.level.toFixed(3):'—')+' bass '+(a?a.bass.toFixed(3):'—')+' · t '+m.currentTime().toFixed(1)+'\n'+
+      (m.live?('deck gain '+m.live.nodes.gain.gain.value.toFixed(2)+' · master vol '+MIKS.master().volume.gain.value.toFixed(2)+' · dest ch '+MIKS.ctx().destination.channelCount+'\n'):'')+
+      lines.join('\n');
+  },250);
+}
 let catalog=[];
 window.MIKS.mixer=mixer;                       /* console / testing hook */
 const inf=MIKS.figure($('inf'),{shape:'infinity'});
@@ -405,11 +425,31 @@ mixer.addEventListener('load',e=>{
 mixer.addEventListener('transition',e=>{loading=null;inf.morphTo(e.detail.track.shapeName);markList();refreshStatus();});
 mixer.addEventListener('handoff',e=>{inf.commitMix(e.detail.to.tone);inf.commit();markList();refreshStatus();});
 mixer.addEventListener('cancel',()=>{inf.setMix(null);inf.reverse();markList();refreshStatus();});
-mixer.addEventListener('play',refreshPlay);
-mixer.addEventListener('pause',refreshPlay);
+mixer.addEventListener('play',()=>{refreshPlay();MIKS.session(true);setMediaSession();});
+mixer.addEventListener('pause',()=>{refreshPlay();MIKS.session(false);setMediaSession();});
 mixer.addEventListener('ended',()=>{refreshPlay();refreshStatus();});
 mixer.addEventListener('status',()=>{markList();refreshStatus();});
 mixer.addEventListener('analysed',refreshMeta);
+
+/* ═══ lock screen / headphone buttons ═══ */
+function setMediaSession(){
+  if(!('mediaSession' in navigator))return;
+  const t=mixer.track;
+  try{
+    if(t)navigator.mediaSession.metadata=new MediaMetadata({title:t.title,artist:'MiKS',album:'mix me with me',
+      artwork:[{src:'media/favicon.png',sizes:'512x512',type:'image/png'}]});
+    navigator.mediaSession.playbackState=mixer.playing?'playing':'paused';
+  }catch(e){}
+}
+if('mediaSession' in navigator){
+  try{
+    navigator.mediaSession.setActionHandler('play',()=>mixer.play());
+    navigator.mediaSession.setActionHandler('pause',()=>mixer.pause());
+    navigator.mediaSession.setActionHandler('nexttrack',()=>mixer.select(mixer.next()));
+  }catch(e){}
+}
+mixer.addEventListener('load',setMediaSession);
+mixer.addEventListener('handoff',setMediaSession);
 
 /* ═══ EQ + volume — on the master, so they survive every handoff ═══ */
 [['eqLow','low'],['eqMid','mid'],['eqHigh','high']].forEach(([id,band])=>{

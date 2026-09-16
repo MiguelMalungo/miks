@@ -24,7 +24,45 @@ function ctx(){
    time (start(0) would round to the next render quantum and skew the clock) */
 const START_LEAD=0.005;
 MIKS.ctx=ctx;
+MIKS.hasCtx=()=>!!AC;
+MIKS.ctxState=()=>AC?AC.state:'none';
 MIKS.warn=msg=>console.warn(msg);          /* the page swaps in its toast */
+
+/* ── iOS ──
+   Web Audio only starts inside a user gesture, and the ringer switch mutes
+   it unless the page holds a "playback" audio session. unlock() is called
+   from the first tap: it claims the session (Safari 17+ has the Audio
+   Session API; older iOS gets a looping silent <audio>, which has the same
+   effect), creates and resumes the context, and plays one silent buffer.
+   After that every tap re-resumes a context iOS may have interrupted. */
+const IOS=/iP(hone|ad|od)/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+let _silent=null;
+function claimSession(){
+  if(navigator.audioSession){ try{navigator.audioSession.type='playback';}catch(e){} return; }
+  if(!IOS)return;
+  if(_silent){ if(_silent.paused)_silent.play().catch(()=>{}); return; }   /* first call was before a tap */
+  /* 0.2 s of silence as a WAV, looped: Safari treats the page as media playback */
+  const sr=8000,n=sr*0.2|0,b=new ArrayBuffer(44+n*2),v=new DataView(b);
+  const str=(o,t)=>{for(let i=0;i<t.length;i++)v.setUint8(o+i,t.charCodeAt(i));};
+  str(0,'RIFF');v.setUint32(4,36+n*2,true);str(8,'WAVE');str(12,'fmt ');v.setUint32(16,16,true);
+  v.setUint16(20,1,true);v.setUint16(22,1,true);v.setUint32(24,sr,true);v.setUint32(28,sr*2,true);
+  v.setUint16(32,2,true);v.setUint16(34,16,true);str(36,'data');v.setUint32(40,n*2,true);
+  _silent=document.createElement('audio');
+  _silent.src=URL.createObjectURL(new Blob([b],{type:'audio/wav'}));
+  _silent.loop=true; _silent.setAttribute('playsinline',''); _silent.volume=0.01;
+  _silent.play().catch(()=>{});
+}
+claimSession();
+let _unlocked=false;
+MIKS.unlock=function(){
+  claimSession();
+  const c=ctx();
+  if(c.state!=='running')c.resume().catch(()=>{});
+  if(_unlocked)return;
+  _unlocked=true;
+  try{ const s=c.createBufferSource(); s.buffer=c.createBuffer(1,1,22050); s.connect(c.destination); s.start(0); }catch(e){}
+};
+MIKS.unlocked=()=>_unlocked;
 
 /* Playback runs on AudioBufferSourceNodes, not <audio> elements: on iOS
    Safari every playbackRate change on a media element interrupts the audio
@@ -35,11 +73,12 @@ MIKS.warn=msg=>console.warn(msg);          /* the page swaps in its toast */
 class BufferPlayer extends EventTarget{
   constructor(){
     super();
-    this.out=ctx().createGain();
+    this._out=null;                           /* made on first use: no context before a tap */
     this.buffer=null; this.duration=0;
     this._rate=1; this._offset=0; this._t0=0;
     this._src=null; this._playing=false;
   }
+  get out(){ if(!this._out)this._out=ctx().createGain(); return this._out; }
   setBuffer(buf){
     this._stopSrc(); this._playing=false; this._offset=0;
     this.buffer=buf||null; this.duration=buf?buf.duration:0;
@@ -499,13 +538,21 @@ class Mixer extends EventTarget{
   }
 
   /* fetch + decode, cached on the track; only ever two or three in memory */
+  /* Fetching may happen any time; decoding waits until a tap has made the
+     context (iOS refuses a context made outside a gesture). Resolves null
+     when it had to stop at the bytes — call again after ctx() exists. */
   decode(track){
     if(track.buffer)return Promise.resolve(track.buffer);
     if(track._decoding)return track._decoding;
     track._decoding=(async()=>{
-      const r=await fetch(track.file);
-      if(!r.ok)throw new Error('HTTP '+r.status);
-      const buf=await ctx().decodeAudioData(await r.arrayBuffer());
+      if(!track._bytes){
+        const r=await fetch(track.file);
+        if(!r.ok)throw new Error('HTTP '+r.status);
+        track._bytes=await r.arrayBuffer();
+      }
+      if(!AC)return null;                       /* no context yet — keep the bytes */
+      const bytes=track._bytes; track._bytes=null;   /* decodeAudioData detaches it */
+      const buf=await ctx().decodeAudioData(bytes);
       track.buffer=buf; track.duration=buf.duration;
       if(!track.peaks)track.peaks=makePeaks(buf);
       if(!track.analysed){                     /* old-format manifest: analyse here */
@@ -520,11 +567,11 @@ class Mixer extends EventTarget{
   }
   _prune(){
     const keep=new Set([this.track,this.incoming,this.next(this.incoming||this.track)]);
-    for(const t of this.tracks)if(!keep.has(t)&&t.buffer&&!t._decoding)t.buffer=null;
+    for(const t of this.tracks)if(!keep.has(t)&&!t._decoding){t.buffer=null;t._bytes=null;}
   }
   _preload(){
     const n=this.next(this.incoming||this.track);
-    if(n&&!n.buffer)this.decode(n).catch(()=>{});
+    if(n&&!n.buffer&&!n._bytes)this.decode(n).catch(()=>{});
   }
 
   /* the one verb the page needs */
@@ -545,7 +592,7 @@ class Mixer extends EventTarget{
     }
     const gen=++this._sel;
     this.emit('queue',{track});
-    try{ await this.decode(track); }
+    try{ if(!(await this.decode(track)))await this.decode(track); }   /* bytes were cached pre-tap */
     catch(e){ MIKS.warn('Could not load '+track.title+' — '+e.message); this.emit('status'); return; }
     if(gen!==this._sel)return;                 /* superseded by a later pick */
     if(this.playing) this._startTransition(track);

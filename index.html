@@ -300,6 +300,9 @@ MIKS.warn=toast;
 
 /* ═══════════════════════════ the mixer ═══════════════════════════ */
 const mixer=new MIKS.Mixer({fadeBeats:16,tempoWindow:0.08,autoAdvance:true});
+/* iOS: the first tap anywhere claims the audio session and starts the
+   context; every later tap re-resumes it if iOS interrupted it */
+['touchend','click','keydown'].forEach(ev=>addEventListener(ev,()=>MIKS.unlock(),{passive:true}));
 let catalog=[];
 window.MIKS.mixer=mixer;                       /* console / testing hook */
 const inf=MIKS.figure($('inf'),{shape:'infinity'});
@@ -365,6 +368,7 @@ function refreshStatus(){
   if(!cur){statusEl.innerHTML='';return;}
   const bpm=mixer.bpm();
   let h=(mixer.playing?'now playing':'paused')+' · <b>'+esc(cur.title)+'</b>'+(bpm?' · '+Math.round(bpm)+' bpm':'');
+  if(mixer.playing&&MIKS.ctxState()!=='running')h+=' &nbsp;·&nbsp; <span class="free">sound is off · tap play</span>';
   if(inc&&tr){
     const p=mixer.progress(), bars=Math.max(1,Math.round(mixer.fadeBeats/4));
     if(p<0)h+=' &nbsp;·&nbsp; <span class="in">cued · '+esc(inc.title)+' · on the next '+(tr.matched?'bar':'beat')+'</span>';
@@ -456,8 +460,10 @@ addEventListener('pointerup',()=>seeking=false);
 
 /* ═══ the frame loop: tick the mixer, feed the infinity ═══ */
 let lastSec=-1, lastP=-1;
+let _stateT=0;
 function raf(){
   mixer.tick();
+  if(performance.now()-_stateT>1000){_stateT=performance.now();if(mixer.track)refreshStatus();}
   const t=mixer.track;
   if(t){
     drawWave();
@@ -509,7 +515,7 @@ addEventListener('resize',()=>{drawWave();});
   mixer.setTracks(catalog);
   renderList(); refreshPlay();
   if(!catalog.some(t=>t.analysed))$('tlNote').textContent='analysing on play';
-  /* warm the first track so the first click is instant */
+  /* warm the first track's bytes so the first tap is quick (decoding waits for the tap) */
   if(catalog[0])mixer.decode(catalog[0]).then(refreshMeta).catch(()=>{});
 })();
 </script>

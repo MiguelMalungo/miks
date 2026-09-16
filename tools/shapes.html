@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MiKS · shape viewer</title>
+<style>
+  :root{--coffee:#161009;--bone:#f0e7d8;--sand:#cdb896;--mist:#8f8069;--gold:#f3c969;--ochre:#e09f3e}
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0}
+  body{background:radial-gradient(ellipse 70% 60% at 50% 45%,#2a1d10,var(--coffee));color:var(--bone);font:13px/1.4 ui-monospace,Menlo,monospace;display:flex;flex-direction:column}
+  .bar{display:flex;gap:14px;align-items:center;padding:12px 18px;border-bottom:1px solid rgba(224,159,62,.14);flex-wrap:wrap}
+  .bar label{color:var(--mist);letter-spacing:.12em;text-transform:uppercase;font-size:10px}
+  select,button{background:#241a11;color:var(--sand);border:1px solid rgba(224,159,62,.25);border-radius:6px;padding:6px 10px;font:inherit}
+  button{cursor:pointer;color:var(--gold)}
+  input[type=range]{width:220px}
+  .viz{position:relative;flex:1;min-height:0}
+  .viz canvas{position:absolute;inset:0;width:100%;height:100%}
+  #info{color:var(--mist);font-size:11px}
+</style>
+</head>
+<body>
+<div class="bar">
+  <label>from</label><select id="from"></select>
+  <label>to</label><select id="to"></select>
+  <label>morph</label><input type="range" id="m" min="0" max="1000" value="0">
+  <button id="go">morph over 3s</button>
+  <button id="swap">swap</button>
+  <label><input type="checkbox" id="beat" checked> fake beat</label>
+  <span id="info"></span>
+</div>
+<div class="viz"><canvas id="c"></canvas></div>
+<script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+<script src="../js/shapes.js"></script>
+<script src="../js/figure.js"></script>
+<script>
+const $=id=>document.getElementById(id);
+const names=MIKS.SHAPE_ORDER;
+[$('from'),$('to')].forEach(sel=>names.forEach(n=>{const o=document.createElement('option');o.value=o.textContent=n;sel.appendChild(o);}));
+$('from').value='infinity'; $('to').value='rings';
+const fig=MIKS.figure($('c'),{shape:'infinity'});
+window.fig=fig;
+fig.setTone(MIKS.TONE_BANK?MIKS.TONE_BANK[0]:{main:0xf3c969,l1:0xfff6d8});
+$('from').addEventListener('change',()=>{fig.setShape($('from').value);$('m').value=0;prep();});
+function prep(){ fig.morphTo($('to').value); fig.setMorph(+$('m').value/1000); }
+$('to').addEventListener('change',prep);
+$('m').addEventListener('input',()=>{ if(fig.morph===0&&+$('m').value>0)prep(); fig.setMorph(+$('m').value/1000); });
+$('go').addEventListener('click',()=>{ fig.setShape($('from').value); fig.morphTo($('to').value,{seconds:3}); });
+$('swap').addEventListener('click',()=>{const a=$('from').value;$('from').value=$('to').value;$('to').value=a;fig.setShape($('from').value);$('m').value=0;prep();});
+/* a fake 122 bpm beat so the wave runs */
+let t0=performance.now();
+(function loop(){
+  const on=$('beat').checked;
+  fig.setPlaying(on);
+  if(on){const beats=(performance.now()-t0)/1000*(122/60); fig.setBeat(beats); fig.setAudio(0.35+0.15*Math.sin(beats*3.1),0.4+0.4*Math.max(0,Math.cos(beats*Math.PI*2)),0.3,0.25);}
+  else fig.setBeat(null);
+  $('info').textContent='shape '+fig.shape+' · morph '+fig.morph.toFixed(2);
+  requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>

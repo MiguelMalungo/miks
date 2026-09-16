@@ -662,9 +662,10 @@ player.addEventListener('loadedmetadata',()=>{
   try{
     const res=await fetch('tracks/manifest.json');
     if(res.ok){
-      const files=await res.json();
+      /* manifest entries are objects now ({file,title,bpm,…}); bare names still work */
+      const files=(await res.json()).map(e=>typeof e==='string'?e:e&&e.file).filter(Boolean);
       const have=new Set(RELEASES.map(x=>x.file.split('/').pop()));
-      const extra=files.filter(f=>typeof f==='string'&&!have.has(f)).map((f,k)=>({
+      const extra=files.filter(f=>!have.has(f)).map((f,k)=>({
         title:prettyTitle(f),
         file:'tracks/'+encodeURIComponent(f),   /* names contain spaces */
         tag:'Single · Afro House',

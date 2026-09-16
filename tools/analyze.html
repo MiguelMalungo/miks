@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MiKS · catalogue analyser</title>
+<style>
+  :root{--coffee:#161009;--bone:#f0e7d8;--sand:#cdb896;--mist:#8f8069;--gold:#f3c969;--ochre:#e09f3e;--clay:#c9552e;--moss:#9aa06a}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--coffee);color:var(--bone);font:14px/1.5 -apple-system,system-ui,sans-serif;padding:32px 20px 60px}
+  main{max-width:820px;margin:0 auto}
+  h1{font-size:20px;font-weight:600;margin:0 0 6px}
+  p{color:var(--sand);margin:0 0 16px;max-width:66ch}
+  code,pre,table{font-family:ui-monospace,Menlo,monospace}
+  button{background:var(--ochre);color:#1a1006;border:0;border-radius:6px;padding:9px 16px;font:600 13px/1 ui-monospace,Menlo,monospace;cursor:pointer;margin-right:8px}
+  button:disabled{opacity:.45;cursor:default}
+  table{border-collapse:collapse;width:100%;font-size:12.5px;margin:18px 0}
+  th,td{text-align:left;padding:6px 8px;border-bottom:1px solid rgba(224,159,62,.14);white-space:nowrap}
+  th{color:var(--mist);font-weight:500;font-size:11px;letter-spacing:.12em;text-transform:uppercase}
+  td.num{text-align:right;font-variant-numeric:tabular-nums}
+  tr.done td:first-child{color:var(--gold)} tr.err td{color:var(--clay)} tr.busy td:first-child{color:var(--ochre)}
+  .warn{color:var(--clay)}
+  textarea{width:100%;height:280px;background:#0f0a06;color:var(--sand);border:1px solid rgba(224,159,62,.2);border-radius:8px;padding:12px;font-size:12px;line-height:1.45}
+  #status{color:var(--mist);font-size:12.5px;margin-left:8px}
+</style>
+</head>
+<body>
+<main>
+  <h1>Catalogue analyser</h1>
+  <p>Runs the mixer's own beat detector over every file in <code>tracks/manifest.json</code> and prints the enriched manifest. Paste the result back into the manifest file so the homepage never analyses on load. Entries that already carry a BPM are re-analysed only if you tick the box.</p>
+  <div>
+    <button id="run">Analyse catalogue</button>
+    <button id="copy" disabled>Copy JSON</button>
+    <label style="font-size:12.5px;color:var(--sand)"><input type="checkbox" id="force"> re-analyse entries that already have a grid</label>
+    <span id="status"></span>
+  </div>
+  <table id="tbl"><thead><tr><th>file</th><th>title</th><th class="num">duration</th><th class="num">bpm</th><th class="num">offset</th><th class="num">confidence</th><th>cue</th></tr></thead><tbody></tbody></table>
+  <textarea id="out" spellcheck="false" placeholder="the manifest appears here"></textarea>
+</main>
+<script src="../js/engine.js"></script>
+<script>
+const $=id=>document.getElementById(id);
+const tbody=document.querySelector('#tbl tbody');
+let entries=[], result=null;
+const fmt=s=>{s=Math.max(0,s|0);return (s/60|0)+':'+String(s%60).padStart(2,'0');};
+function row(e,cls){
+  const tr=document.createElement('tr'); tr.className=cls||'';
+  tr.innerHTML=`<td>${e.file}</td><td>${e.title||''}</td><td class="num">${e.duration?fmt(e.duration):'—'}</td>`+
+    `<td class="num">${e.bpm?e.bpm.toFixed(2):'<span class="warn">no grid</span>'}</td><td class="num">${e.bpm?e.offset.toFixed(3):'—'}</td>`+
+    `<td class="num">${e.confidence?e.confidence.toFixed(2):'—'}</td><td>${e.cueBeat||0}</td>`;
+  return tr;
+}
+function render(){ tbody.textContent=''; entries.forEach(e=>tbody.appendChild(row(e,e._cls))); }
+function serialise(){
+  const clean=entries.map(e=>{
+    const o={file:e.file,title:e.title,duration:+(e.duration||0).toFixed(3)};
+    if(e.bpm){o.bpm=e.bpm;o.offset=e.offset;o.confidence=e.confidence;}
+    if(e.cueBeat)o.cueBeat=e.cueBeat;
+    return o;
+  });
+  const json='[\n'+clean.map(o=>'  '+JSON.stringify(o)).join(',\n')+'\n]\n';
+  $('out').value=json; window.RESULT=clean; $('copy').disabled=false;
+  return json;
+}
+(async function load(){
+  const r=await fetch('../tracks/manifest.json'); const list=await r.json();
+  entries=list.map(e=>typeof e==='string'?{file:e,title:MIKS.prettyTitle(e)}:Object.assign({title:MIKS.prettyTitle(e.file)},e));
+  render(); $('status').textContent=entries.length+' entries';
+})();
+$('run').addEventListener('click',async()=>{
+  $('run').disabled=true;
+  const force=$('force').checked;
+  for(const e of entries){
+    if(e.bpm&&!force){e._cls='done';render();continue;}
+    e._cls='busy'; render(); $('status').textContent='analysing '+e.file+' …';
+    await new Promise(r=>setTimeout(r,20));
+    try{
+      const res=await fetch('../tracks/'+encodeURIComponent(e.file));
+      if(!res.ok)throw new Error('HTTP '+res.status);
+      const buf=await MIKS.ctx().decodeAudioData(await res.arrayBuffer());
+      e.duration=buf.duration;
+      const b=MIKS.detectBeats(buf);
+      if(b){e.bpm=b.bpm;e.offset=b.offset;e.confidence=b.confidence;}
+      else{e.bpm=null;e.offset=0;e.confidence=0;}
+      e._cls='done';
+    }catch(err){ e._cls='err'; e.error=err.message; }
+    render(); serialise();
+  }
+  $('status').textContent='done — '+entries.filter(e=>e.bpm).length+' of '+entries.length+' have a beat grid';
+  $('run').disabled=false; window.DONE=true;
+});
+$('copy').addEventListener('click',()=>{ navigator.clipboard.writeText($('out').value).then(()=>$('status').textContent='copied'); });
+</script>
+</body>
+</html>

@@ -252,7 +252,7 @@
 
 <main>
   <aside class="list" aria-label="Tracklist">
-    <p class="tag">mix <b>me</b> with <b>me</b></p>
+    <p class="tag"><b>me</b> &amp; <b>me</b></p>
     <div class="lab"><span>Tracklist · <b id="tlCount">—</b></span><span id="tlNote">beat-matched</span></div>
     <ol class="tl" id="tl"></ol>
   </aside>
@@ -436,7 +436,7 @@ function setMediaSession(){
   if(!('mediaSession' in navigator))return;
   const t=mixer.track;
   try{
-    if(t)navigator.mediaSession.metadata=new MediaMetadata({title:t.title,artist:'MiKS',album:'mix me with me',
+    if(t)navigator.mediaSession.metadata=new MediaMetadata({title:t.title,artist:'MiKS',album:'me & me',
       artwork:[{src:'media/favicon.png',sizes:'512x512',type:'image/png'}]});
     navigator.mediaSession.playbackState=mixer.playing?'playing':'paused';
   }catch(e){}

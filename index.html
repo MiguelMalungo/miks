@@ -56,7 +56,8 @@
   }
   #bg::after{content:"";position:absolute;inset:0;
     background:radial-gradient(ellipse 120% 100% at 50% 40%, transparent 55%, rgba(10,6,3,.75));}
-  header,main,footer{position:relative;z-index:2}
+  main,footer{position:relative;z-index:2}
+  header{position:relative;z-index:10}     /* above the figure, which may run up under it */
 
   /* ── header: brand left, menu centered ────── */
   header{
@@ -289,9 +290,9 @@
 <div id="toast"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
-<script src="js/engine.js?v=20260917b"></script>
-<script src="js/shapes.js?v=20260917b"></script>
-<script src="js/figure.js?v=20260917b"></script>
+<script src="js/engine.js?v=20260917c"></script>
+<script src="js/shapes.js?v=20260917c"></script>
+<script src="js/figure.js?v=20260917c"></script>
 <script>
 /* ═════════════════════════════ helpers ═════════════════════════════ */
 const $=id=>document.getElementById(id);

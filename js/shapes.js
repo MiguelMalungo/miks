@@ -183,16 +183,18 @@ SHAPES.beam=(()=>{
     ]};
 })();
 
-/* the sun cross: a ring with two bars ending inside its wall; the
-   upright sits forward so the centre reads over/under */
-SHAPES.suncross={
-  name:'suncross', tilt:0.32, scale:1.12,
-  paths:[
-    {curve:new Ring(0,0,2.0),closed:true,r:R},
-    {curve:spline([V(0,1.7,0.62),V(0,0,0.62),V(0,-1.7,0.62)],false),closed:false,r:R},
-    {curve:spline([V(-1.7,0,0),V(0,0,0),V(1.7,0,0)],false),closed:false,r:R}
-  ]
-};
+/* the sun cross: a ring with two thinner bars that end inside its wall and
+   stay within its depth — one just forward, one just back, so the centre
+   reads over/under without anything leaving the circle */
+SHAPES.suncross=(()=>{
+  const r=0.26, Z=0.28;
+  return {name:'suncross', tilt:0.32, scale:1.12,
+    paths:[
+      {curve:new Ring(0,0,2.0),closed:true,r:R},
+      {curve:spline([V(0,1.66,Z),V(0,0,Z),V(0,-1.66,Z)],false),closed:false,r:r},
+      {curve:spline([V(-1.66,0,-Z),V(0,0,-Z),V(1.66,0,-Z)],false),closed:false,r:r}
+    ]};
+})();
 
 /* the heart: the classic parametric heart, notch deepened so the pipe
    can't fill it, cusps rounded by the spline */

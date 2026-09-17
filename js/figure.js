@@ -291,17 +291,23 @@ MIKS.figure=function(canvas,opts={}){
   }
 
   /* ═══ framing ═══ */
-  let W=2,H=2, dist=10, distT=10;
+  /* The camera is fixed to the infinity's framing: every other shape is
+     scaled in shapes.js to feel as big, and may overshoot the stage — the
+     canvas is allowed to be larger than its box (CSS), so the overshoot is
+     drawn behind whatever sits around the stage. */
+  const FRAME={halfW:3.04,halfH:1.36};
+  let W=2,H=2, dist=10, distT=10, overW=1, overH=1;
   function fitDist(halfW,halfH){
     const tan=Math.tan(cam.fov/2*Math.PI/180);
-    return Math.max((halfW*1.15)/(0.84*tan*cam.aspect),(halfH*1.25+0.3)/(0.72*tan));
+    return Math.max((halfW*1.15)/(0.84/overW*tan*cam.aspect),(halfH*1.25+0.3)/(0.72/overH*tan));
   }
   function resize(){
-    const r=canvas.parentElement.getBoundingClientRect();
+    const r=canvas.getBoundingClientRect(), b=canvas.parentElement.getBoundingClientRect();
     W=Math.max(2,r.width); H=Math.max(2,r.height);
+    overW=Math.max(1,W/Math.max(2,b.width)); overH=Math.max(1,H/Math.max(2,b.height));
     renderer.setSize(W,H,false);
     cam.aspect=W/H; cam.updateProjectionMatrix();
-    dist=distT=fitDist(A.halfW,A.halfH);
+    dist=distT=fitDist(FRAME.halfW,FRAME.halfH);
   }
   addEventListener('resize',resize);
 
@@ -383,8 +389,7 @@ MIKS.figure=function(canvas,opts={}){
     tiles.instanceMatrix.needsUpdate=true; tiles.instanceColor.needsUpdate=true;
     tileMat.emissiveIntensity=0.5+level*0.8+beat*0.6+dis*0.5;
 
-    /* framing follows the morph; never edge-on: yaw sway, tilt from above, parallax */
-    distT=fitDist(A.halfW+(B.halfW-A.halfW)*m,A.halfH+(B.halfH-A.halfH)*m);
+    /* fixed framing; never edge-on: yaw sway, tilt from above, parallax */
     dist+=(distT-dist)*0.08;
     cam.position.set(0,0,dist); cam.lookAt(0,0,0);
     const tilt=A.tilt+(B.tilt-A.tilt)*m;
@@ -411,7 +416,7 @@ MIKS.figure=function(canvas,opts={}){
     get shape(){return morph>=0.5?B.name:A.name;},
     get morph(){return morph;},
     /* jump straight to a shape */
-    setShape(name){ const s=SHAPES[name]; if(!s)return; fillSlot(A,s,null); copySlot(A,B); markDirty(A); markDirty(B); morph=morphT=0; mode='idle'; dist=distT=fitDist(A.halfW,A.halfH); },
+    setShape(name){ const s=SHAPES[name]; if(!s)return; fillSlot(A,s,null); copySlot(A,B); markDirty(A); markDirty(B); morph=morphT=0; mode='idle'; },
     /* prepare a morph. With seconds it runs on its own clock; without, feed setMorph(). */
     morphTo(name,o={}){
       if(!SHAPES[name])return false;

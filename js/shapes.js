@@ -7,7 +7,7 @@
    straight lerp between two tables.
 
    Path: {curve: THREE.Curve, closed: bool, r: tube radius}
-   Shape: {name, paths, tilt}                                                */
+   Shape: {name, paths, tilt, scale} — scale enlarges the geometry, never the pipe                                                */
 (function(){
 'use strict';
 const MIKS=window.MIKS=window.MIKS||{};
@@ -59,13 +59,13 @@ SHAPES.infinity={
 SHAPES.rings=(()=>{
   const RR=1.3, d=0.95, dy=-0.2;                          /* circle radius, triangle circumradius */
   const c=[[0,d+dy],[-d*0.866,-d*0.5+dy],[d*0.866,-d*0.5+dy]];
-  return {name:'rings', tilt:0.22,
+  return {name:'rings', tilt:0.22, scale:1.22,
     paths:c.map((p,k)=>({curve:new Ring(p[0],p[1],RR,0.34,2,k*Math.PI*2/3),closed:true,r:R}))};
 })();
 
 /* the triquetra as a trefoil knot: three interlaced lobes, one closed curve */
 SHAPES.trefoil={
-  name:'trefoil', tilt:0.36,
+  name:'trefoil', tilt:0.36, scale:1.32,
   paths:[{curve:new Trefoil(0.74,0.62),closed:true,r:R}]
 };
 
@@ -74,7 +74,7 @@ SHAPES.triskelion=(()=>{
   const arm=[V(0,0,0),V(0.18,0.8,0.05),V(0.58,1.65,0.10),V(1.22,2.22,0.14),V(1.98,2.3,0.16),
              V(2.5,1.82,0.14),V(2.34,1.2,0.10),V(1.78,1.12,0.06),V(1.6,1.5,0.04),V(1.82,1.82,0.02)]
              .map(p=>V(p.x*0.86,p.y*0.86,p.z));
-  return {name:'triskelion', tilt:0.34,
+  return {name:'triskelion', tilt:0.34, scale:1.12,
     paths:[0,120,240].map(a=>({curve:spline(rot(arm,a),false),closed:false,r:R}))};
 })();
 
@@ -91,7 +91,7 @@ SHAPES.star=(()=>{
     pts.push(V(a[0]+(b[0]-a[0])*0.14,a[1]+(b[1]-a[1])*0.14));
     pts.push(V(a[0]+(b[0]-a[0])*0.86,a[1]+(b[1]-a[1])*0.86));
   }
-  return {name:'star', tilt:0.30, paths:[{curve:spline(pts,true),closed:true,r:R}]};
+  return {name:'star', tilt:0.30, scale:1.18, paths:[{curve:spline(pts,true),closed:true,r:R}]};
 })();
 
 /* twin loops: two tall ovals, an S sweeping through the middle, a ball at
@@ -100,7 +100,7 @@ SHAPES.loops=(()=>{
   const oval=(cx,sx,sy)=>new (class extends THREE.Curve{getPoint(t,o=new THREE.Vector3()){
     const th=t*Math.PI*2; return o.set(cx+Math.cos(th)*sx,Math.sin(th)*sy,0.0);}})();
   const S=[V(-0.7,2.15,0.5),V(-1.3,1.3,0.48),V(-1.05,0.4,0.46),V(0,0.0,0.48),V(1.05,-0.4,0.46),V(1.3,-1.3,0.48),V(0.7,-2.15,0.5)];
-  return {name:'loops', tilt:0.26,
+  return {name:'loops', tilt:0.26, scale:1.22,
     paths:[
       {curve:oval(-0.9,1.2,2.2),closed:true,r:R},
       {curve:oval(0.9,1.2,2.2),closed:true,r:R},
@@ -116,7 +116,7 @@ SHAPES.totem=(()=>{
   const oval=(cx,cy,sx,sy,z=0)=>new (class extends THREE.Curve{getPoint(t,o=new THREE.Vector3()){
     const th=t*Math.PI*2; return o.set(cx+Math.cos(th)*sx,cy+Math.sin(th)*sy,z);}})();
   const diamond=sgn=>[V(0,sgn*2.55),V(0.62,sgn*1.95),V(1.15,sgn*1.55),V(0.62,sgn*1.15),V(0,sgn*0.62),V(-0.62,sgn*1.15),V(-1.15,sgn*1.55),V(-0.62,sgn*1.95)];
-  return {name:'totem', tilt:0.2,
+  return {name:'totem', tilt:0.2, scale:1.12,
     paths:[
       {curve:spline(diamond(1),true),closed:true,r:R},
       {curve:oval(-0.98,0,0.9,0.92,0.12),closed:true,r:R},
@@ -128,7 +128,7 @@ SHAPES.totem=(()=>{
 /* one ring around a sphere: the sphere is a spindle torus — a tiny circle
    with a tube fatter than its radius, which closes into a ball */
 SHAPES.target={
-  name:'target', tilt:0.34,
+  name:'target', tilt:0.34, scale:1.28,
   paths:[
     {curve:new Ring(0,0,2.05,0,0,0,0),closed:true,r:R},
     {curve:new Ring(0,0,0.34,0,0,0,0),closed:true,r:R}
@@ -202,6 +202,7 @@ function sample(shape,n,align){
         rr=new Float32Array(n),path=new Uint16Array(n),uu=new Float32Array(n),
         spacing=new Float32Array(n);
   const blocks=[]; let i0=0, maxX=0,maxY=0,maxR=0;
+  const SC=shape.scale||1;
   shape.paths.forEach((p,pi)=>{
     const k=counts[pi], a=(align&&align[pi])||{du:0,rev:false};
     const us=[];
@@ -213,11 +214,11 @@ function sample(shape,n,align){
     }
     const fr=frames(p.curve,us,p.closed);
     for(let j=0;j<k;j++){
-      const i=i0+j, c=p.curve.getPointAt(us[j]);
+      const i=i0+j, c=p.curve.getPointAt(us[j]).multiplyScalar(SC);
       center[i*3]=c.x;center[i*3+1]=c.y;center[i*3+2]=c.z;
       NN[i*3]=fr.N[j].x;NN[i*3+1]=fr.N[j].y;NN[i*3+2]=fr.N[j].z;
       BB[i*3]=fr.B[j].x;BB[i*3+1]=fr.B[j].y;BB[i*3+2]=fr.B[j].z;
-      rr[i]=p.r; path[i]=pi; uu[i]=us[j]; spacing[i]=lens[pi]/(p.closed?k:k-1);
+      rr[i]=p.r; path[i]=pi; uu[i]=us[j]; spacing[i]=lens[pi]*SC/(p.closed?k:k-1);
       maxX=Math.max(maxX,Math.abs(c.x)+p.r); maxY=Math.max(maxY,Math.abs(c.y)+p.r); maxR=Math.max(maxR,p.r);
     }
     blocks.push({start:i0,count:k,closed:p.closed});

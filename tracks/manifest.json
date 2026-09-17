@@ -1,21 +1,21 @@
 [
-  {"file": "Ancestral.mp3", "title": "Ancestral", "duration": 179.733, "bpm": 120.9983, "offset": 0.001, "confidence": 1.72},
+  {"file": "Ancestral.mp3", "title": "Ancestral", "duration": 179.733, "bpm": 120.9983, "offset": 0.001, "confidence": 1.72, "shape": "chain"},
   {"file": "Gogo.mp3", "title": "Gogo", "duration": 223.24, "bpm": 113.0125, "offset": 0.0725, "confidence": 3.68, "shape": "target"},
   {"file": "HerPulse1.mp3", "title": "HerPulse 1", "duration": 236.88, "bpm": 122.5709, "offset": 0.0758, "confidence": 4.84, "shape": "infinity"},
   {"file": "HerPulse2.mp3", "title": "HerPulse 2", "duration": 223.8, "bpm": 122.9824, "offset": 0.0475, "confidence": 2.49},
-  {"file": "HisPulse1.mp3", "title": "HisPulse 1", "duration": 206.56, "bpm": 122.0089, "offset": 0.0946, "confidence": 4.08},
+  {"file": "HisPulse1.mp3", "title": "HisPulse 1", "duration": 206.56, "bpm": 122.0089, "offset": 0.0946, "confidence": 4.08, "shape": "spiral"},
   {"file": "HisPulse2.mp3", "title": "HisPulse 2", "duration": 193.12, "bpm": 121.4768, "offset": 0.0727, "confidence": 2.53},
-  {"file": "Kaya Pulse.mp3", "title": "Kaya Pulse", "duration": 254.733, "bpm": 119.9741, "offset": 0.036, "confidence": 1.89},
-  {"file": "Low End.mp3", "title": "Low End", "duration": 206.814, "bpm": 121.9733, "offset": 0.0919, "confidence": 3.67},
+  {"file": "Kaya Pulse.mp3", "title": "Kaya Pulse", "duration": 254.733, "bpm": 119.9741, "offset": 0.036, "confidence": 1.89, "shape": "knot"},
+  {"file": "Low End.mp3", "title": "Low End", "duration": 206.814, "bpm": 121.9733, "offset": 0.0919, "confidence": 3.67, "shape": "beam"},
   {"file": "Maji.mp3", "title": "Maji", "duration": 271.44, "bpm": 121.9996, "offset": 0.49, "confidence": 2.73, "shape": "loops"},
   {"file": "Moonlit.mp3", "title": "Moonlit", "duration": 223.32, "bpm": 117.9983, "offset": 0.0553, "confidence": 4.63, "shape": "star"},
   {"file": "Ngiyavuma.mp3", "title": "Ngiyavuma", "duration": 209.8, "bpm": 119.9951, "offset": 0.0677, "confidence": 4.89, "shape": "totem"},
   {"file": "NightTemple2.mp3", "title": "NightTemple 2", "duration": 223.24, "bpm": 121.9989, "offset": 0.4445, "confidence": 1.69, "shape": "trefoil"},
-  {"file": "Nyala1.mp3", "title": "Nyala 1", "duration": 223.893, "bpm": 121.0069, "offset": 0.0684, "confidence": 2.11},
+  {"file": "Nyala1.mp3", "title": "Nyala 1", "duration": 223.893, "bpm": 121.0069, "offset": 0.0684, "confidence": 2.11, "shape": "suncross"},
   {"file": "Nyala2.mp3", "title": "Nyala 2", "duration": 223.013, "bpm": 121.9647, "offset": 0.0445, "confidence": 2.18},
   {"file": "Ocean.mp3", "title": "Ocean", "duration": 183.36, "bpm": 120.985, "offset": 0.2326, "confidence": 2.75, "shape": "rings"},
   {"file": "Sands.mp3", "title": "Sands", "duration": 222.36, "bpm": 123.0133, "offset": 0.1182, "confidence": 4.47, "shape": "triskelion"},
   {"file": "Siyadansa.mp3", "title": "Siyadansa", "duration": 160.76, "bpm": 120, "offset": 0.06, "confidence": 4.5},
   {"file": "TaxiRank.mp3", "title": "TaxiRank", "duration": 211.88, "bpm": 119.0003, "offset": 0.002, "confidence": 3.31},
-  {"file": "Yanarudi.mp3", "title": "Yanarudi", "duration": 246.88, "bpm": 122.0088, "offset": 0.12, "confidence": 4.04}
+  {"file": "Yanarudi.mp3", "title": "Yanarudi", "duration": 246.88, "bpm": 122.0088, "offset": 0.12, "confidence": 4.04, "shape": "heart"}
 ]

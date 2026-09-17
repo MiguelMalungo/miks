@@ -18,9 +18,10 @@ HTML/CSS/JS with no build step.
   a dark occluder so crossings read over/under, metal tiles, and a swarm of
   points that a wave, locked to the beat grid, pulls dense and bright as it runs
   left to right once per bar; a mix floods the incoming track's colour in from
-  the left. Every track owns one of six shapes ([`js/shapes.js`](js/shapes.js):
+  the left. Every track owns one of fourteen shapes ([`js/shapes.js`](js/shapes.js):
   infinity, three rings, triquetra as a trefoil knot, triskelion, six-pointed star,
-  twin loops, the stacked figure, a ring around a sphere) and
+  twin loops, the stacked figure, a ring around a sphere, two linked rings, a
+  spiral, a four-lobed cross knot, a ring with an I-beam, a sun cross, a heart) and
   a mix morphs the figure into the incoming track's shape in step with the fade —
   the tiles dissolve into the swarm, fly to the new figure and re-crystallise at
   the handoff. Shapes come from the manifest's optional `shape` field, otherwise
@@ -43,7 +44,8 @@ is just slower.
 
 Optional per-entry fields: `cueBeat` (the beat a mix should enter on, for tracks
 whose first onset is not a downbeat), `title`, and `shape` (one of `infinity`,
-`rings`, `trefoil`, `triskelion`, `star`, `loops`, `totem`, `target`).
+`rings`, `trefoil`, `triskelion`, `star`, `loops`, `totem`, `target`, `chain`,
+`spiral`, `knot`, `beam`, `suncross`, `heart`).
 
 ```bash
 python3 -m http.server 8080   # then open http://localhost:8080/tools/analyze.html

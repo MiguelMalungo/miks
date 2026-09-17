@@ -1,5 +1,5 @@
 /* ═══════════════════════════ the shapes ═══════════════════════════
-   Six figures, each a set of tube paths in one shared unit system (the
+   Fourteen figures, each a set of tube paths in one shared unit system (the
    infinity is 2.6 units to each side). A shape is pure geometry: the
    renderer (figure.js) samples it into ring tables — centre, frame, radius
    per ring — and builds the occluder, the tiles and the swarm from those.
@@ -16,20 +16,21 @@ const V=(x,y,z=0)=>new THREE.Vector3(x,y,z);
 
 /* ── analytic curves ─────────────────────────────────────────────── */
 class Lemniscate extends THREE.Curve{
-  constructor(a,lift){super();this.a=a;this.lift=lift;}
+  constructor(a,lift,rot=0,z=0){super();this.a=a;this.lift=lift;this.rot=rot;this.z=z;}
   getPoint(t,o=new THREE.Vector3()){
     const th=t*Math.PI*2,s=Math.sin(th),c=Math.cos(th),d=1+s*s;
-    return o.set(this.a*c/d,this.a*s*c/d,this.lift*Math.sin(th));
+    const x=this.a*c/d,y=this.a*s*c/d,cr=Math.cos(this.rot),sr=Math.sin(this.rot);
+    return o.set(x*cr-y*sr,x*sr+y*cr,this.z+this.lift*Math.sin(th));
   }
 }
 class Ring extends THREE.Curve{
   /* a circle with a sinusoidal lift: weave=2 makes it pass over then under
      twice per turn, which is what three overlapping rings need */
-  constructor(cx,cy,rad,lift=0,weave=0,phase=0,z=0){super();Object.assign(this,{cx,cy,rad,lift,weave,phase,z});}
+  constructor(cx,cy,rad,lift=0,weave=0,phase=0,z=0,lp=0){super();Object.assign(this,{cx,cy,rad,lift,weave,phase,z,lp});}
   getPoint(t,o=new THREE.Vector3()){
     const th=t*Math.PI*2+this.phase;
     return o.set(this.cx+Math.cos(th)*this.rad,this.cy+Math.sin(th)*this.rad,
-                 this.z+this.lift*Math.sin(this.weave*th));
+                 this.z+this.lift*Math.sin(this.weave*th+this.lp));
   }
 }
 class Trefoil extends THREE.Curve{
@@ -135,8 +136,78 @@ SHAPES.target={
   ]
 };
 
+/* two linked rings: opposite cosine lifts, so each goes over at one
+   crossing and under at the other */
+SHAPES.chain={
+  name:'chain', tilt:0.30, scale:1.12,
+  paths:[
+    {curve:new Ring(0, 0.78,1.5, 0.5,1,0,0, Math.PI/2),closed:true,r:R},
+    {curve:new Ring(0,-0.78,1.5,-0.5,1,0,0, Math.PI/2),closed:true,r:R}
+  ]
+};
+
+/* the spiral: two turns out from the centre with a slow rise in depth,
+   ending in the little hook */
+SHAPES.spiral=(()=>{
+  const pts=[], turns=2.05, a=0.42, b=0.19, n=44;
+  for(let i=0;i<=n;i++){
+    const th=i/n*turns*Math.PI*2, r=a+b*th;
+    pts.push(V(Math.cos(th)*r,Math.sin(th)*r,-0.35+0.7*i/n));
+  }
+  /* the hook: turn back inward at the tail */
+  const last=pts[pts.length-1], th=turns*Math.PI*2;
+  pts.push(V(last.x+Math.cos(th+1.2)*0.55,last.y+Math.sin(th+1.2)*0.55,0.42));
+  pts.push(V(last.x+Math.cos(th+2.2)*0.85,last.y+Math.sin(th+2.2)*0.85,0.5));
+  return {name:'spiral', tilt:0.34, scale:0.98, paths:[{curve:spline(pts,false),closed:false,r:R}]};
+})();
+
+/* the cross knot: two infinities on the diagonals, one riding higher, so
+   the four strands pass the centre at four heights */
+SHAPES.knot={
+  name:'knot', tilt:0.36, scale:1.22,
+  paths:[
+    {curve:new Lemniscate(2.3,0.36, Math.PI/4),closed:true,r:R},
+    {curve:new Lemniscate(2.3,0.95,-Math.PI/4),closed:true,r:R}
+  ]
+};
+
+/* a ring with an I-beam through it: the upright rides forward over the ring */
+SHAPES.beam=(()=>{
+  const Z=0.72;
+  return {name:'beam', tilt:0.26, scale:0.96,
+    paths:[
+      {curve:new Ring(0,0,1.62),closed:true,r:R},
+      {curve:spline([V(0,2.5,Z),V(0,0,Z),V(0,-2.5,Z)],false),closed:false,r:R},
+      {curve:spline([V(-1.25,2.5,Z),V(0,2.5,Z),V(1.25,2.5,Z)],false),closed:false,r:R},
+      {curve:spline([V(-1.25,-2.5,Z),V(0,-2.5,Z),V(1.25,-2.5,Z)],false),closed:false,r:R}
+    ]};
+})();
+
+/* the sun cross: a ring with two bars ending inside its wall; the
+   upright sits forward so the centre reads over/under */
+SHAPES.suncross={
+  name:'suncross', tilt:0.32, scale:1.12,
+  paths:[
+    {curve:new Ring(0,0,2.0),closed:true,r:R},
+    {curve:spline([V(0,1.7,0.62),V(0,0,0.62),V(0,-1.7,0.62)],false),closed:false,r:R},
+    {curve:spline([V(-1.7,0,0),V(0,0,0),V(1.7,0,0)],false),closed:false,r:R}
+  ]
+};
+
+/* the heart: the classic parametric heart, notch deepened so the pipe
+   can't fill it, cusps rounded by the spline */
+SHAPES.heart=(()=>{
+  const pts=[], n=30, k=0.152;
+  for(let i=0;i<n;i++){
+    const t=i/n*Math.PI*2;
+    const x=16*Math.pow(Math.sin(t),3), y=13*Math.cos(t)-6.5*Math.cos(2*t)-2*Math.cos(3*t)-Math.cos(4*t);
+    pts.push(V(x*k,y*k+0.45,0));
+  }
+  return {name:'heart', tilt:0.3, scale:1.08, paths:[{curve:spline(pts,true),closed:true,r:R}]};
+})();
+
 MIKS.SHAPES=SHAPES;
-MIKS.SHAPE_ORDER=['infinity','rings','trefoil','triskelion','star','loops','totem','target'];
+MIKS.SHAPE_ORDER=['infinity','rings','trefoil','triskelion','star','loops','totem','target','chain','spiral','knot','beam','suncross','heart'];
 
 /* ── sampling ────────────────────────────────────────────────────── */
 /* Split n rings across the paths in proportion to length (floor of 6 each). */

@@ -49,6 +49,12 @@ whose first onset is not a downbeat), `title`, and `shape` (one of `infinity`,
 python3 -m http.server 8080   # then open http://localhost:8080/tools/analyze.html
 ```
 
+## Deploying
+
+Pages serves the `gh-pages` branch; push `main` there. The `?v=` query on the
+script tags in `index.html` pins the page to its scripts — bump it whenever the
+JavaScript changes, or a visitor can get a new page with cached old scripts.
+
 ## Credits
 
 Design & build with Claude. Video and artwork © MiKS.

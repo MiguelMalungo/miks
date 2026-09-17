@@ -452,7 +452,7 @@ MIKS.figure=function(canvas,opts={}){
     },
     setAudio(l,b,mm,h){ lvT=l; bsT=b; mdT=mm; hiT=h; },
     setPlaying(on){ playT=on?1:0; if(!on){waveT=-1;} },
-    resize, stats,
+    resize, stats, frame(){return {dist,W,H,overW,overH,aspect:cam.aspect,fov:cam.fov};},
     dispose(){ cancelAnimationFrame(raf); renderer.dispose(); }
   };
   return api;

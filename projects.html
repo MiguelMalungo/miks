@@ -63,7 +63,9 @@
   /* horizontal journey of video cards */
   #hwrap{position:relative;overflow:hidden}
   #track{display:flex;align-items:stretch;will-change:transform}
-  .panel{flex:0 0 auto;width:min(880px,92vw);height:80vh;padding:4vh 2.2vw;display:flex}
+  /* 72vw each, so two panels are always 144vw — the horizontal journey
+     can never run out of travel, whatever the screen width */
+  .panel{flex:0 0 auto;width:72vw;height:80vh;padding:4vh 2.2vw;display:flex}
   .card{
     position:relative;flex:1;border-radius:26px;overflow:hidden;
     display:flex;flex-direction:column;justify-content:flex-end;
@@ -173,8 +175,8 @@
   <section class="intro">
     <span class="kick">Beyond the decks</span>
     <h1>Works &<br><i>worlds.</i></h1>
-    <p>Two ongoing projects — stages shared with other artists, and a classroom with
-       the decks left on. Different rooms, same pulse.</p>
+    <p>Two ongoing projects — a classroom with the decks left on, and stages shared
+       with other artists. Different rooms, same pulse.</p>
     <div class="hint"><span class="ln" style="transform:scaleX(-1)"></span>SCROLL TO TRAVEL<span class="ln"></span></div>
   </section>
 
@@ -183,25 +185,9 @@
 
       <article class="panel">
         <div class="card">
-          <video src="media/projC.mp4" muted loop playsinline autoplay></video>
-          <div class="scrim"></div>
-          <div class="num">01</div>
-          <div class="body">
-            <span class="tag">Live Collaborations</span>
-            <h2>Roots in <b>Motion</b></h2>
-            <p>Collaborations with local artists in every city — live music meeting
-               digital art, with visual performances improvised in real time on stage.
-               No two rooms, and no two nights, ever the same.</p>
-            <div class="foot"><span class="meta">LIVE MUSIC × LIVE VISUALS · TOURING</span></div>
-          </div>
-        </div>
-      </article>
-
-      <article class="panel">
-        <div class="card">
           <video src="media/projD.mp4" muted loop playsinline autoplay></video>
           <div class="scrim"></div>
-          <div class="num">02</div>
+          <div class="num">01</div>
           <div class="body">
             <span class="tag">Community &amp; Education</span>
             <h2>The <b>Way</b></h2>
@@ -211,6 +197,22 @@
                pilgrims and local ranchos trade a song for a dance and local artists hang
                their work. Youngsters leave with a set, a show, and a new way of making.</p>
             <div class="foot"><span class="meta">PRAIA DO MARRECO · LAVRA, MATOSINHOS · 2027</span></div>
+          </div>
+        </div>
+      </article>
+
+      <article class="panel">
+        <div class="card">
+          <video src="media/projC.mp4" muted loop playsinline autoplay></video>
+          <div class="scrim"></div>
+          <div class="num">02</div>
+          <div class="body">
+            <span class="tag">Live Collaborations</span>
+            <h2>Roots in <b>Motion</b></h2>
+            <p>Collaborations with local artists in every city — live music meeting
+               digital art, with visual performances improvised in real time on stage.
+               No two rooms, and no two nights, ever the same.</p>
+            <div class="foot"><span class="meta">LIVE MUSIC × LIVE VISUALS · TOURING</span></div>
           </div>
         </div>
       </article>
@@ -266,7 +268,7 @@ document.querySelectorAll('.card[data-href]').forEach(c=>{
   const mm=gsap.matchMedia();
   mm.add('(min-width: 861px)',()=>{
     const track=document.getElementById('track');
-    const dist=()=>track.scrollWidth-innerWidth;
+    const dist=()=>Math.max(0,track.scrollWidth-innerWidth);
     const tween=gsap.to(track,{
       x:()=>-dist(),
       ease:'none',

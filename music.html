@@ -239,17 +239,17 @@
 <script>
 /* ═══ new releases — each one paints the blob and swaps the backdrop ═══ */
 const RELEASES=[
-  {title:'HerPulse',   file:'tracks/HerPulse1.mp3',  tag:'Single · Afro House',
+  {title:'Nomvula',    file:'tracks/HerPulse1.mp3',  tag:'Single · Afro House',
     tone:{main:0xf3c969, emis:0x5a4410, l1:0xfff6d8, l2:0xe0a83a}},   /* golden yellow */
-  {title:'Moonlit',    file:'tracks/Moonlit.mp3',    tag:'Single · Deep',
+  {title:'Mwezi',      file:'tracks/Moonlit.mp3',    tag:'Single · Deep',
     tone:{main:0xcdb896, emis:0x4a3d24, l1:0xf3ead2, l2:0xb39a6a}},   /* beige / sand */
-  {title:'Sands',      file:'tracks/Sands.mp3',      tag:'Single · Desert House',
+  {title:'Mchanga',    file:'tracks/Sands.mp3',      tag:'Single · Desert House',
     tone:{main:0xe09f3e, emis:0x5a3808, l1:0xffe6b0, l2:0xc9772a}},   /* ochre / amber */
-  {title:'Ocean',      file:'tracks/Ocean.mp3',      tag:'Single · Organic',
+  {title:'Bahari',     file:'tracks/Ocean.mp3',      tag:'Single · Organic',
     tone:{main:0xe9dfc0, emis:0x585028, l1:0xfbf6e4, l2:0xc9b98a}},   /* cream */
   {title:'Ngiyavuma',  file:'tracks/Ngiyavuma.mp3',  tag:'Single · Amapiano',
     tone:{main:0xc9552e, emis:0x3a1206, l1:0xffcaa8, l2:0xe0673a}},   /* clay / terracotta */
-  {title:'NightTemple',file:'tracks/NightTemple2.mp3',tag:'Single · Ritual',
+  {title:'Night Temple',file:'tracks/NightTemple2.mp3',tag:'Single · Ritual',
     tone:{main:0xb5772a, emis:0x3a2408, l1:0xf0cf88, l2:0x9a5e1c}},   /* deep bronze */
 ];
 
@@ -663,11 +663,11 @@ player.addEventListener('loadedmetadata',()=>{
     const res=await fetch('tracks/manifest.json');
     if(res.ok){
       /* manifest entries are objects now ({file,title,bpm,…}); bare names still work */
-      const files=(await res.json()).map(e=>typeof e==='string'?e:e&&e.file).filter(Boolean);
+      const entries=(await res.json()).map(e=>typeof e==='string'?{file:e}:e).filter(e=>e&&e.file);
       const have=new Set(RELEASES.map(x=>x.file.split('/').pop()));
-      const extra=files.filter(f=>!have.has(f)).map((f,k)=>({
-        title:prettyTitle(f),
-        file:'tracks/'+encodeURIComponent(f),   /* names contain spaces */
+      const extra=entries.filter(e=>!have.has(e.file)).map((e,k)=>({
+        title:e.title||prettyTitle(e.file),     /* the manifest's title wins, so renames carry */
+        file:'tracks/'+encodeURIComponent(e.file),   /* names contain spaces */
         tag:'Single · Afro House',
         tone:TONE_BANK[(RELEASES.length+k)%TONE_BANK.length]
       }));

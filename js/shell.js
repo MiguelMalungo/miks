@@ -244,10 +244,13 @@ async function scripts(doc){
   }
 }
 
-/* first load: the page's own scripts already ran in global scope — just
-   tag this generation so their loops are disposable, and mount the bar */
+/* First load: the page's own scripts run in global scope, so tag this
+   generation for as long as the document is still parsing — every blocking
+   script in the body runs before DOMContentLoaded, so they all get tagged
+   and their loops stay disposable. Clearing it on a timer instead would
+   race the browser fetching the page's remaining scripts. */
 ctxGen=gen;
-if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',mount);
-else mount();
-stO(()=>{ctxGen=null;},0);
+function first(){ ctxGen=null; mount(); }
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',first);
+else first();
 })();

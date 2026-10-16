@@ -290,10 +290,10 @@
 <div id="toast"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
-<script src="js/engine.js?v=20261016a"></script>
-<script src="js/shell.js?v=20261016a"></script>
-<script src="js/shapes.js?v=20261016a"></script>
-<script src="js/figure.js?v=20261016a"></script>
+<script src="js/engine.js?v=20261016b"></script>
+<script src="js/shell.js?v=20261016b"></script>
+<script src="js/shapes.js?v=20261016b"></script>
+<script src="js/figure.js?v=20261016b"></script>
 <script>
 /* ═════════════════════════════ helpers ═════════════════════════════ */
 const $=id=>document.getElementById(id);
@@ -494,6 +494,7 @@ addEventListener('pointerup',()=>seeking=false);
 let lastSec=-1, lastP=-1;
 let _stateT=0;
 function raf(){
+  if(!document.getElementById('inf'))return;      /* page swapped out — stop */
   mixer.tick();
   if(performance.now()-_stateT>1000){_stateT=performance.now();if(mixer.track)refreshStatus();}
   const t=mixer.track;

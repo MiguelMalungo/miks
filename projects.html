@@ -173,9 +173,8 @@
   <section class="intro">
     <span class="kick">Beyond the decks</span>
     <h1>Works &<br><i>worlds.</i></h1>
-    <p>Four ongoing projects — code that breathes, poems made of ink, stages shared
-       with other artists, and a classroom with the decks left on. Different rooms,
-       same pulse.</p>
+    <p>Two ongoing projects — stages shared with other artists, and a classroom with
+       the decks left on. Different rooms, same pulse.</p>
     <div class="hint"><span class="ln" style="transform:scaleX(-1)"></span>SCROLL TO TRAVEL<span class="ln"></span></div>
   </section>
 
@@ -183,48 +182,10 @@
     <div id="track">
 
       <article class="panel">
-        <div class="card" data-href="https://miguelmalungo.github.io/kept/">
-          <video src="media/projA.mp4" muted loop playsinline autoplay></video>
-          <div class="scrim"></div>
-          <div class="num">01</div>
-          <div class="body">
-            <span class="tag">Interactive Experience</span>
-            <h2>Serenity <b>Project</b></h2>
-            <p>A quiet corner of the internet. An interactive piece built for slowing
-               down — soft motion, softer sound, and nothing asking for your attention.
-               Enter, breathe, stay as long as you need.</p>
-            <div class="foot">
-              <a class="visit" href="https://miguelmalungo.github.io/kept/" target="_blank" rel="noopener">Visit ↗</a>
-              <span class="meta">LIVE ON THE WEB</span>
-            </div>
-          </div>
-        </div>
-      </article>
-
-      <article class="panel">
-        <div class="card" data-href="https://miguelmalungo.github.io/BlocksExpanded/">
-          <video src="media/projB.mp4" muted loop playsinline autoplay></video>
-          <div class="scrim"></div>
-          <div class="num">02</div>
-          <div class="body">
-            <span class="tag">Living Poetry</span>
-            <h2>Blocks <b>Expanded</b></h2>
-            <p>The poetry book <em>BLOCKS</em>, re-set in living type — 67 poems sampled
-               into thousands of grains of ink that reform around every word you touch.
-               Reading becomes excavation.</p>
-            <div class="foot">
-              <a class="visit" href="https://miguelmalungo.github.io/BlocksExpanded/" target="_blank" rel="noopener">Visit ↗</a>
-              <span class="meta">67 POEMS · INTERACTIVE EDITION</span>
-            </div>
-          </div>
-        </div>
-      </article>
-
-      <article class="panel">
         <div class="card">
           <video src="media/projC.mp4" muted loop playsinline autoplay></video>
           <div class="scrim"></div>
-          <div class="num">03</div>
+          <div class="num">01</div>
           <div class="body">
             <span class="tag">Live Collaborations</span>
             <h2>Roots in <b>Motion</b></h2>
@@ -240,14 +201,17 @@
         <div class="card">
           <video src="media/projD.mp4" muted loop playsinline autoplay></video>
           <div class="scrim"></div>
-          <div class="num">04</div>
+          <div class="num">02</div>
           <div class="body">
-            <span class="tag">Community & Education</span>
-            <h2>The <b>Yard</b></h2>
-            <p>Free workshops in community spaces — DJing and VJing, live visuals, and
-               generative-AI tools for art production. Youngsters leave with a set,
-               a show, and a new way of making.</p>
-            <div class="foot"><span class="meta">LUANDA · LISBOA · 200+ ALUMNI</span></div>
+            <span class="tag">Community &amp; Education</span>
+            <h2>The <b>Way</b></h2>
+            <p>Free workshops in DJing and VJing, live visuals, and generative-AI tools
+               for art production. After Luanda and Lisboa, the next room is a plot on
+               the Caminho Português da Costa, at Praia do Marreco in Lavra — the
+               <em>Caminho Vivo</em> stop, where pilgrims and local ranchos trade a song
+               for a dance and local artists hang their work. Youngsters leave with a
+               set, a show, and a new way of making.</p>
+            <div class="foot"><span class="meta">LUANDA · LISBOA · 200+ ALUMNI · LAVRA 2027</span></div>
           </div>
         </div>
       </article>
@@ -284,7 +248,7 @@
     requestAnimationFrame(loop);})();
 })();
 
-/* cards 01/02 open their live projects */
+/* a card with data-href opens its live project */
 document.querySelectorAll('.card[data-href]').forEach(c=>{
   c.addEventListener('click',e=>{
     if(e.target.closest('a'))return;            /* the Visit pill handles itself */

@@ -1,5 +1,6 @@
 [
   {"file": "Ancestral.mp3", "title": "Ancestral", "duration": 179.733, "bpm": 120.9983, "offset": 0.001, "confidence": 1.72, "shape": "chain"},
+  {"file": "EL.mp3", "title": "EL", "duration": 228, "bpm": 122.0009, "offset": 0.4916, "confidence": 5.97},
   {"file": "Gogo.mp3", "title": "Gogo", "duration": 223.24, "bpm": 113.0125, "offset": 0.0725, "confidence": 3.68, "shape": "target"},
   {"file": "HerPulse1.mp3", "title": "Nomvula", "duration": 236.88, "bpm": 122.5709, "offset": 0.0758, "confidence": 4.84, "shape": "infinity"},
   {"file": "HerPulse2.mp3", "title": "Thandiwe", "duration": 223.8, "bpm": 122.9824, "offset": 0.0475, "confidence": 2.49},
@@ -17,5 +18,6 @@
   {"file": "Sands.mp3", "title": "Mchanga", "duration": 222.36, "bpm": 123.0133, "offset": 0.1182, "confidence": 4.47, "shape": "triskelion"},
   {"file": "Siyadansa.mp3", "title": "Siyadansa", "duration": 160.76, "bpm": 120, "offset": 0.06, "confidence": 4.5},
   {"file": "TaxiRank.mp3", "title": "Taxi Rank", "duration": 211.88, "bpm": 119.0003, "offset": 0.002, "confidence": 3.31},
+  {"file": "TheWay.mp3", "title": "The Way", "duration": 203.36, "bpm": 119.9996, "offset": 0.0124, "confidence": 4.84, "shape": "spiral"},
   {"file": "Yanarudi.mp3", "title": "Yanarudi", "duration": 246.88, "bpm": 122.0088, "offset": 0.12, "confidence": 4.04, "shape": "heart"}
 ]

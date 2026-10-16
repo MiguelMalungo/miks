@@ -27,6 +27,15 @@ HTML/CSS/JS with no build step.
   the handoff. Shapes come from the manifest's optional `shape` field, otherwise
   from list position, never the same twice in a row. Tune them by eye in
   [`tools/shapes.html`](tools/shapes.html).
+- **The mix follows you.** [`js/shell.js`](js/shell.js) keeps one document alive
+  across the site: a click on an internal link fetches the page, swaps the style
+  and the body and pushes the URL, so the AudioContext, the decks and the fade
+  carry straight across with no gap. Real URLs, working back button, and a direct
+  hit on any page still loads normally. A mute button sits in the header on every
+  page but the homepage, which has the full controls. `music.html` is deliberately
+  left as a hard navigation so its own player takes over. Pages own their view and
+  register `MIKS.onLeave()` for anything to dispose; their loops are sandboxed, so
+  whatever a page scheduled stops when the page is left.
 - **`music.html` — new releases.** A living three.js orb whose tones repaint to
   match whichever release is playing.
 - **`tour.html` — tour dates.** A half-speed video backdrop over the live schedule.

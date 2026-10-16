@@ -291,6 +291,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
 <script src="js/engine.js?v=20261016a"></script>
+<script src="js/shell.js?v=20261016a"></script>
 <script src="js/shapes.js?v=20261016a"></script>
 <script src="js/figure.js?v=20261016a"></script>
 <script>
@@ -302,11 +303,9 @@ function toast(msg,ms=3800){toastEl.textContent=msg;toastEl.classList.add('show'
 function fmtTime(s){s=Math.max(0,s|0);return (s/60|0)+':'+String(s%60).padStart(2,'0');}
 MIKS.warn=toast;
 
-/* ═══════════════════════════ the mixer ═══════════════════════════ */
-const mixer=new MIKS.Mixer({fadeBeats:16,tempoWindow:0.08,autoAdvance:true});
-/* iOS: the first tap anywhere claims the audio session and starts the
-   context; every later tap re-resumes it if iOS interrupted it */
-['touchend','click','keydown'].forEach(ev=>addEventListener(ev,()=>MIKS.unlock(ev),{passive:true}));
+/* ═══ the mixer — created by the shell (js/shell.js) and kept alive
+   across pages, so this page is just its view ═══ */
+const mixer=MIKS.mixer;
 
 /* ?debug — a live readout of what the browser is doing with audio */
 if(/[?&]debug/.test(location.search)){
@@ -327,21 +326,10 @@ if(/[?&]debug/.test(location.search)){
       lines.join('\n');
   },250);
 }
-let catalog=[];
-window.MIKS.mixer=mixer;                       /* console / testing hook */
+let catalog=MIKS.catalog;
 const inf=MIKS.figure($('inf'),{shape:'infinity'});
-
-/* ═══ a shape per track — from the manifest, else by list position, and
-   never the same as the row before so auto-advance always morphs ═══ */
-function assignShapes(){
-  const order=MIKS.SHAPE_ORDER, n=order.length;
-  catalog.forEach((t,i)=>{ t.shapeName=(t.shape&&order.includes(t.shape))?t.shape:order[i%n]; t.shapeFixed=!!t.shape; });
-  for(let i=1;i<catalog.length;i++){
-    const t=catalog[i], prev=catalog[i-1].shapeName, next=catalog[i+1]?catalog[i+1].shapeName:null;
-    if(!t.shapeFixed&&(t.shapeName===prev||t.shapeName===next))
-      t.shapeName=order.find(s=>s!==prev&&s!==next)||t.shapeName;
-  }
-}
+/* leaving the homepage: give the WebGL context back */
+MIKS.onLeave(()=>{try{inf.dispose();}catch(e){}});
 
 /* ═══ the list ═══ */
 const tl=$('tl');
@@ -547,20 +535,16 @@ addEventListener('resize',()=>{drawWave();});
   })();
 })();
 
-/* ═══════ the catalogue — tracks/manifest.json, grid included ═══════ */
+/* ═══════ the catalogue — loaded once by the shell ═══════ */
 (async function load(){
   if(location.protocol==='file:'){toast('Serve over http:// so the catalogue can load.');return;}
-  try{
-    const r=await fetch('tracks/manifest.json',{cache:'no-cache'});
-    if(!r.ok)throw new Error('HTTP '+r.status);
-    catalog=MIKS.catalogFromManifest(await r.json());
-  }catch(e){toast('Could not load the catalogue — '+e.message);return;}
-  assignShapes();
-  mixer.setTracks(catalog);
-  renderList(); refreshPlay();
+  catalog=await MIKS.ready;
+  if(!catalog.length)return;
+  renderList(); refreshPlay(); refreshStatus();
   if(!catalog.some(t=>t.analysed))$('tlNote').textContent='analysing on play';
-  /* warm the first track's bytes so the first tap is quick (decoding waits for the tap) */
-  if(catalog[0])mixer.decode(catalog[0]).then(refreshMeta).catch(()=>{});
+  /* coming back mid-mix: show what is already playing */
+  const t=mixer.track;
+  if(t){ $('waveNote').style.display='none'; inf.setShape(t.shapeName); inf.setTone(t.tone); drawWave(); }
 })();
 </script>
 </body>
